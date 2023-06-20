@@ -1,0 +1,13 @@
+# virtual environments
+.python-version
+.venv/
+
+# experimentation folder
+sandbox/
+
+# vscode settings
+.vscode/
+
+# R
+.Rhistory
+.RData
