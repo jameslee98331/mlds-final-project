@@ -1,0 +1,700 @@
+---
+title: "MLDS Research Project - Milestone 2"
+subtitle: "Notebook Presentation"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "19th June 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+bibliography: ref.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("C:/Users/James/coding/mlds-final-project/Milestone2/")
+```
+
+# Introduction
+
+The focus of this research project is on the technical challenges behind
+Bayesian clustering. The purpose of this notebook is to demonstrate the effect
+of kernel mis-specification in Bayesian mixture models, as well as to provide
+some useful code structure to be used in the research project for the evaluation
+of model consistency.
+
+## Context
+
+First, to provide some application context, it is often the objective for
+scientific researchers using cluster analysis to find out information about the
+number of clusters and any in-cluster characteristics. In genomics, clustering
+can be used to identify cell types from single-cell RNA-seq data (scRNA-seq)
+[@kiselev-et-al-2019]. Prabhakaran et al. (2016) shows an example using Bayesian
+mixture models for cell type discovery and characterisation on scRNA-seq data
+[@prabhakaran-2016].
+
+## Background
+
+### Mixture model
+
+At the centre of Bayesian clustering is the mixture model. In the mixture model,
+we assume that our heterogeneous data $x$ is generated from $K$ components, which 
+could be expressed as
+
+$$\mathbb{p}(x) = \sum_{k=1}^{K}w_kf(x|\theta_k)$$
+
+where $f(\cdot|\theta_k)$ is the density (the kernel) and $w_k$ is the
+weight of component $k$. When the total number of components $K$ is unknown, we could
+
+1. put a prior distribution, e.g. Poisson, on $K$, which produces the Mixture of Finite Mixture (MFM) Model, or
+1. assume $K=\infty$, which produces the Infinite Mixture Model (often known as Bayesian Nonparametric Model, or BNP).
+
+One of the most common BNP used for Bayesian clustering is the Dirichlet Process
+Mixture model (DPM). The simulation study in section 2 focuses on evaluating the
+DPM, which is defined as follows
+
+$$
+F \sim \mathrm{DP}(\alpha, G_0), \\
+\theta_i \sim F, \\
+x_i \sim f(\cdot | \theta_i),
+$$
+where $G_0$ is the base measure of the Dirichlet Process.
+
+### Asymptotic inconsistency
+
+Despite the flexibility of the DPM to allow for number of clusters to
+grow as number of samples increase, Miller and Harrison (2013) show that,
+asymptotically, the posterior is severely inconsistent, meaning that it does not
+converge to the true number of components as the number of data sample grows
+[@miller-harrison-2013].
+
+### Inconsistency under mis-specification
+
+The component kernel $f(\cdot | \theta_k)$ is assumed to be of some parametric
+form, e.g. Gaussian, which is prone to mis-specification. This means the
+modeller chooses a kernel function to be used in the mixture model that is not
+the same as the underlying distribution that generated the data. This is almost
+inevitable in practice, as the underlying distribution is often unknown and data
+generating process are often complex and could not be summarised easily with
+simple parametric distributions [@cai-et-al-2021].
+
+Cai et al. (2021) shows that, under kernel mis-specification, the posterior
+of the number of component for MFM is also inconsistent [@cai-et-al-2021]. Under
+kernel mis-specification, Chaumeny et al. (2022) also shows that both the MFM
+and the DPM results in overestimation of the number of components
+[@chaumeny-et-al-2022].
+
+As discussed in the Context section, inferring the number of clusters is often
+an important task in scientific discovery. While kernel mis-specification is
+near inevitable, understanding and improving the consistency of Bayesian Mixture
+Model for clustering is therefore an important research area to pursue.
+
+## Structure of this notebook
+
+This notebook presentation explores the inconsistency problem under kernel
+mis-specification through simulation.
+
+We first simulate the well-specified case, i.e. fitting a multivariate Gaussian
+Dirichlet Process Mixture model on data generated from a mixture of multivariate
+Gaussian. We will examine the posterior distribution on the number of components
+$p(k | x)$ for a range of sample sizes to analyse the asymptotic behaviour.
+
+The above analysis would then be repeated for mis-specified kernels, rather than
+multivariate Gaussian, we simulate mixtures from multivariate Laplace and
+skew-Normal. The posterior distributions on the number of component $p(k|x)$ are
+again analysed, and compared against the well-specified case.
+
+This notebook also explores a recent advancement in robust Bayesian clustering
+using posterior coarsening [@miller-dunson-2019], by implementing the algorithm
+provided by one of the authors in R and running it on a simulated mixture of
+skew-normal.
+
+# Simulation study
+
+## Well-specified case
+
+Imports
+```{r imports, warning=FALSE, results='hide', message=FALSE}
+library(tidyverse)
+library(mvtnorm)
+library(dirichletprocess)
+library(glue)
+library(reshape2)
+library(LaplacesDemon)
+library(sn)
+```
+
+The code below defines the constants to be used in the data generation process
+for this section:
+
+1.  True number of components: $K_0 = 3$,
+1.  Component-specific means: $\mu_1 = (0, 0)^T$, $\mu_2 = (-0.5, 1)^T$, $\mu_3 = (1, -0.5)^T$,
+1.  Global covariance matrix: $\Sigma = \begin{pmatrix} 0.05 & 0 \\ 0 & 0.05 \end{pmatrix}$.
+
+The weights are also generated from a $K_0=3$ dimensional Dirichlet distribution,
+with $\mathbf{\alpha} = (\gamma/K_0, \ldots, \gamma/K_0) \in \mathbb{R}^{K_0}$ and 
+$\gamma = 5$.
+
+```{r generate-data-consts}
+set.seed(0)
+
+# True number of components
+K_0 = 3
+N = 500
+DIMS = 2
+ALPHA = 5
+
+alphas = rep((ALPHA/K_0), K_0)
+w = rdirichlet(n = 1, alpha = alphas)
+print("Component weights")
+print(w)
+
+mean_1 = c(0, 0)
+mean_2 = c(-0.5, 1)
+mean_3 = c(1, -0.5)
+means = list(mean_1, mean_2, mean_3)
+cov = diag(DIMS) * 0.05
+```
+
+The code below generates a dataset from a mixture of 3 Gaussian components.
+
+```{r gen-gaussian-data}
+gaussian_data = matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels = rep(NA, N)
+for (i in 1:N) {
+  z_vec = rmultinom(1, 1, w)
+  z_group = which(z_vec == 1)
+  gaussian_data[i, ] = rmvnorm(1, mean = means[[z_group]], sigma = cov)
+  true_labels[i] = z_group
+}
+
+create_sim_df = function(data, true_labels) {
+  # Helper function to create dataframes for simulation from
+  # generated data
+  df = as.data.frame(cbind(data, true_labels))
+  df$true_labels = as.factor(df$true_labels)
+  colnames(df) = c("x", "y", "true_label")
+  return(df)
+}
+
+gaussian_df = create_sim_df(gaussian_data, true_labels)
+```
+
+Visualise the generated data.
+
+```{r vis-gen-data}
+plot_generated_data = function(df, name) {
+  df %>% 
+    ggplot() + 
+    geom_point(mapping = aes(x = x, y = y, color = true_label)) +
+    ggtitle(glue("Simulated data - Mixture of {K_0} {name}"))
+}
+plot_generated_data(gaussian_df, "Gaussian")
+```
+
+
+To infer from the DPM, we use the `dirichletprocess` package
+[@ross-markwick-2023], which conducts posterior inference based on the Chinese
+Restaurant Process sampler [@neal-2000]. Below details the MCMC settings:
+
+1.  Run the data set with 5 different sizes $n \in \{20, 100, 250, 500\}$.
+1.  500 MCMC iterations.
+1.  Use the last 100 MCMC samples for subsequent inference.
+
+```{r mcmc-settings}
+ns = c(20, 100, 250, 500)
+mcmc_its = 500
+mcmc_samples = 100
+```
+
+The code below defines a function to fit the Dirichlet Process Multivariate
+Gaussian Mixture model using the `dirichletprocess` library
+[@ross-markwick-2023].
+
+```{r run-mcmc-func}
+run_mcmc <- function(df, mcmc_its, mcmc_samples, ns, distribution_name) {
+  # This function fits the Dirichlet Process Mixture Model with Multivariate
+  # Gaussians.
+  
+  num_n = length(ns)
+  all_ks = matrix(data = NA, nrow = mcmc_samples, ncol = num_n)
+
+  for (j in 1:num_n) {
+  
+    # Number of data points
+    n = ns[j]
+    
+    # Fit DPM
+    trunc_data = df[1:n, -3]
+    dataTrans = scale(trunc_data)
+    dpCluster =  DirichletProcessMvnormal(dataTrans)
+    dpCluster <- Fit(dpCluster, mcmc_its, progressBar = FALSE)
+  
+    # Extract the number of components inferred 
+    weights = rev(dpCluster$weightsChain)
+    for (idx in 1:mcmc_samples) {
+      # Find the number of components
+      n_comps = length(weights[[idx]])
+      all_ks[idx, j] = n_comps
+    }
+  }
+  results = list("dp_obj" = dpCluster, "all_ks" = all_ks)
+  return(results)
+}
+```
+
+Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
+Gaussian (well-specified).
+
+```{r gaussian-dpm, cache=TRUE}
+results = run_mcmc(gaussian_df, mcmc_its, mcmc_samples, ns, "Gaussian")
+gaussian_all_ks = results$all_ks
+gaussian_dp_obj = results$dp_obj
+```
+
+Define helper function to plot the posterior $p(k|x)$ with a range of sample
+sizes.
+
+```{r pmf-plot}
+plot_posterior_comps = function(
+    all_ks, 
+    plot_title,
+    max_comp_in_plot = 10
+  ) {
+  # This function calculates the probability masses for the number of components
+  # from 0 to 10 from the last 500 mcmc samples, for all the sample sizes
+  # considered (20, 100, 250, 500), and plots the PMFs on the same axes.
+  
+  # The number of dataset sizes considered
+  num_n = ncol(all_ks)
+  
+  # Allocate a matrix to store pmf results
+  pmf = matrix(data = NA, nrow = max_comp_in_plot, ncol = num_n) 
+  
+  # calculate the PMF for number of components (0 to 10) for each of the sample
+  # sizes considered
+  for (n in 1:num_n) {
+    for (i in 1:max_comp_in_plot) {
+      pmf[i, n] = sum(all_ks[, n] == i) / mcmc_samples
+    }
+  }
+
+  # Plot the results
+  df = as.data.frame(cbind(1:max_comp_in_plot, pmf))
+  colnames(df) = c("k", ns)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "sample_sizes", "pmf")
+  pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = sample_sizes), linewidth=1) +
+    geom_vline(xintercept = 3, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:max_comp_in_plot) +
+    ggtitle(plot_title)
+  
+  results = list("pmf_data" = pmf, "pmf_plot" = pmf_plot)
+  return(results)
+}
+```
+
+Plot posterior PMF on the number of components $p(k|x)$.
+
+```{r plot-posterior-gaussian}
+results = plot_posterior_comps(
+  gaussian_all_ks, 
+  "Posterior Distribution of Number of Components (Well-specified)"
+)
+results$pmf_plot
+```
+
+The mode of the posterior PMF on the number of components in the well-sepcified
+case appears to stay around the true value (dotted black line) but the
+probability mass at $k = K_0 = 3$ appears to be decreasing as the sample size
+increase. This is consistent with the findings in [@miller-harrison-2013].
+
+## Mis-specified cases
+
+In this section, we explore 2 cases of kernel mis-specification by fitting the
+Multivariate Gaussian DPM on data generated by
+
+1. Multivariate Laplace mixtures, and
+1. Multivariate skew-normal mixtures.
+
+### Laplace mixture
+
+Generate Laplace Mixture data.
+
+```{r gen-laplace-data}
+set.seed(0)
+
+laplace_data = matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels = rep(NA, N)
+
+for (i in 1:N) {
+  z_vec = rmultinom(1, 1, w)
+  z_group = which(z_vec == 1)
+  laplace_data[i, ] = rmvl(1, mu = means[[z_group]], Sigma = cov)
+  true_labels[i] = z_group
+}
+
+laplace_df = create_sim_df(laplace_data, true_labels)
+plot_generated_data(laplace_df, "Laplace")
+```
+
+Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
+Laplace distributions (mis-specified).
+
+```{r laplace-dpm, cache=TRUE}
+results = run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "Laplace")
+laplace_all_ks = results$all_ks
+laplace_dp_obj = results$dp_obj
+```
+
+Plot posterior PMF on the number of components $p(k|x)$ in the mis-specified
+case (Laplace).
+
+```{r plot-laplace-posterior}
+results = plot_posterior_comps(
+  laplace_all_ks, 
+  "Posterior Distribution of Number of Components (Mis-specified: Laplace)"
+)
+results$pmf_plot
+```
+
+Comparing to the posterior on the number of components in the well-specified
+case, the posterior on the number of components appears to be much less
+consistent asymptotically under kernel mis-specification. As the number of data
+points increase, the posterior $p(k|x)$ shifts to the right and the probability
+of $k=K_0=3$, where the dotted line is, decreases to zero very quickly.
+
+The scatter plot below highlights this problem, showing the over-clustering
+caused.
+
+```{r plot-laplace-clustering}
+plot(laplace_dp_obj) + 
+  ggtitle("Example clustering from DPM on Laplace Mixtures") +
+  xlab("x") +
+  ylab("y")
+```
+
+### Skew-normal mixture
+
+To demonstrate another case of kernel mis-specification, we look at data
+generated using a mixture of bivariate skew-normal distributions.
+
+```{r gen-skew-normal-data}
+# Generate data
+set.seed(0)
+
+# Parameters for skew normal distributions
+omega1 = matrix(c(0.1, 0, 0, 0.3), nrow = DIMS, byrow = TRUE)
+omega2 = matrix(c(0.3, 0, 0, 0.1), nrow = DIMS, byrow = TRUE)
+omega3 = matrix(c(0.4, 0, 0, 0.2), nrow = DIMS, byrow = TRUE)
+omegas = list(omega1, omega2, omega3)
+SN_ALPHA = c(1, 3)
+TAU = 1
+
+# Pre-allocate arrays
+skew_norm_data = matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels = rep(NA, N)
+
+for (i in 1:N) {
+  z_vec = rmultinom(1, 1, w)
+  z_group = which(z_vec == 1)
+  skew_norm_data[i, ] = rmsn(
+    n = 1, 
+    xi = means[[z_group]], 
+    Omega = omegas[[z_group]], 
+    alpha = SN_ALPHA,
+    tau = TAU
+  )
+  true_labels[i] = z_group
+}
+
+skew_norm_df = create_sim_df(skew_norm_data, true_labels)
+plot_generated_data(skew_norm_df, "Skew Normals")
+```
+
+Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
+Skew-Normal distributions.
+
+```{r skew-norm-dpm, cache=TRUE}
+results = run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "skew-normal")
+skew_norm_all_ks = results$all_ks
+skew_norm_dp_obj = results$dp_obj
+```
+
+Plot posterior PMF on the number of components $p(k|x)$ in the mis-specified
+case (Skew-Normal).
+
+```{r plot-skew-norm-posterior}
+results = plot_posterior_comps(
+  skew_norm_all_ks, 
+  "Posterior Distribution of Number of Components (Mis-specified: Skew Normal)"
+)
+results$pmf_plot
+```
+
+Again, looking at an example from the clustering, we observe over-clustering -
+i.e. many small clusters are (wrongly) created, highlighting the inconsistency
+problem under kernel mis-specification.
+
+```{r plot-skew-norm-clustering}
+plot(skew_norm_dp_obj) + 
+  ggtitle("Example clustering from DPM on Skew-Normal Mixtures") +
+  xlab("x") +
+  ylab("y")
+```
+
+# Posterior coarsening
+
+## Background
+
+Robust Bayesian clustering methods to overcome this inconsistency problem has
+become a recent research focus. One particular example is the "Posterior
+Coarsening" method proposed in [@miller-dunson-2019].
+
+The intuition behind posterior coarsening is that rather than to condition the
+posterior on the observed the data, we condition on the model generating data
+close to the data that we observed. This "coarsening" effect is achieved by
+tempering the likelihood.
+
+In this section, we demonstrate empirically how posterior coarsening may help
+"robustifying" Bayesian inference under kernel mis-specification.
+
+## Simulation
+
+The functions in `core.R` are originally created by Miller (see:
+https://github.com/jwmi/CoarsenedPosterior) in the Julia language. The functions
+are translated into R with minor modifications to variable names and syntax. The
+`sample` function runs the Metropolis-Hastings MCMC algorithm to draw samples
+from the coarsened posterior.
+
+```{r load-from-R-file}
+# Load supporting functions
+source("./core.R", local = knitr::knit_global())
+```
+
+Using the code translated to R, the simulation study below aims to recreate the
+results obtained in [@miller-dunson-2019], with a simulated dataset, to
+demonstrate the effect of posterior coarsening. We create a dataset with a
+mixture of 3 univariate skew-normal distributions, with location $l_i$, scale
+$s_i$ and shape $a_i$ parameters as follows:
+
+1. $l_1 = -4$, $s_1 = 1$, $a_1 = 5$
+1. $l_2 = -1$, $s_2 = 2$, $a_2 = 5$
+1. $l_3 = 8$, $s_3 = -2$, $a_3 = 5$
+
+and with component weights $w_1 = 0.2$, $w_2 = 0.3$ and $w_3 = 0.5$
+respectively. We only choose 1-dimension in favour of computation time, but one
+piece of future work would be to extend the algorithms in `core.R` to the
+multi-dimensional case.
+
+Generate data from a mixture of 3 univariate skew-normal distributions.
+
+```{r gen-skew-norm-coarsen}
+# number of data points
+N = 500
+
+# probability of component 1
+p1 = 0.2
+p2 = 0.5
+
+# location, scale, and shape of component 1
+l1 = -4
+s1 = 1
+a1 = 5  
+
+# location, scale, and shape of component 2
+l2 = -1
+s2 = 2
+a2 = 5
+
+# location, scale, and shape of component 3
+l3 = 8
+s3 = -2
+a3 = 5
+
+# Generate a mixture of skew normal data with 20-30-50 split. The skewrnd
+# function is defined in the core.R script.
+x = rep(NA, N)
+for (i in 1:N) {
+  prob = runif(1)
+  if (prob < p1) {
+    x[i] = skewrnd(1, l1, s1, a1)
+  }
+  else if (prob < p2) {
+    x[i] = skewrnd(1, l2, s2, a2)
+  }
+  else {
+    x[i] = skewrnd(1, l3, s3, a3)
+  }
+}
+```
+
+Visualise the generated data in a histogram.
+
+```{r skew-normal-histogram}
+as.data.frame(x) %>% ggplot(aes(x = x)) +
+  geom_histogram(binwidth = 0.25) +
+  ggtitle("Histogram of 3 skew normal mixtures (1 dimensional)") +
+  scale_x_continuous(breaks = -5:10)
+```
+
+
+The parameter $\alpha$ in the governs how much coarsening is used. More
+coarsening with $\alpha << n$ and less with $\alpha >> n$. When $\alpha=\infty$,
+the posterior returns to the standard case without coarsening.
+
+To simulate both cases, with number of data points $N = 500$ as defined above,
+we simulate two cases with $\alpha_1 = 50$ to represent the coarsened case and
+$\alpha_2 = 10^{10}$ to represent the case with no coarsening.
+
+Run MCMC on coarsened posterior.
+
+```{r run-coarsen-mcmc, cache=TRUE}
+run_coarsen_mcmc = function(x, alpha = 100, mcmc_samples = 2500) {
+  n = length(x)
+
+  # Following equation 2.3 (Miller and Dunson, 2018)
+  zeta = alpha / (alpha + n) 
+  res = sampler(
+    x, # Data 
+    mcmc_samples, # Number of MCMC samples
+    zeta # Power to raise likelihood to
+  )
+  return(res)
+}  
+
+# With coarsening alpha << n
+mcmc_samples = 2500
+all_ks = matrix(NA, nrow = mcmc_samples, ncol = 2)
+
+res_50 = run_coarsen_mcmc(x, alpha = 50, mcmc_samples = mcmc_samples)
+all_ks[, 1] = res_50$k_r
+
+# Without coarsening alpha >> n
+res_Inf = run_coarsen_mcmc(x, alpha = 10^10, mcmc_samples = mcmc_samples)
+all_ks[, 2] = res_Inf$k_r
+```
+
+Plot the posterior on the number of components $k$ with coarsening ($\alpha = 50$) and without coarsening ($\alpha = 10^{10}$).
+
+```{r plot-coarsening-posteriors}
+max_comp_in_plot = 10
+pmf = matrix(data = NA, nrow = max_comp_in_plot, ncol = 2) 
+
+for (i in 1:2) {
+  for (j in 1:max_comp_in_plot) {
+    pmf[j, i] = sum(all_ks[, i] == j) / mcmc_samples
+  }
+}
+
+df = data.frame(cbind(1:max_comp_in_plot, pmf))
+colnames(df) = c("k", "alpha=50", "alpha=10^10")
+long_df = melt(df,  id.vars = "k", variable.name = "alpha")
+colnames(long_df) = c("k", "alpha", "pmf")
+
+long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = alpha), linewidth=1) +
+  geom_vline(xintercept = 3, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:max_comp_in_plot) +
+  ggtitle("Posterior PMFs on number of components")
+```
+
+From the posterior pmf plot above, we can see that, with coarsening, the posterior
+distribution on the number of components is more consistent than in the case with
+no coarsening under kernel mis-specification. 
+
+In the case with no coarsening, the posterior distribution $p(k|x)$ shifts to
+the right, inferring more non-empty components than the true value of $k = K_0 =
+3$, where the dotted line is.
+
+To visualise what really happened, we can also look at the predicted component
+densities and the overall density. The code below defines a helper function to
+plot the component and the overall densities on the same axes.
+
+```{r plot_density_est}
+plot_density_est = function(p, theta) {
+  # Helper function to plot the estimated component and overall densities
+  # p - component weights
+  # theta - component parameters (mean, precision)
+  
+  xmin = -5
+  xmax = 10
+  xs = seq(xmin, xmax, length = 1000)
+  
+  comp_count = length(which(p > 0))
+  overall_density = rep(0, length(xs))
+  pdfs = matrix(NA, ncol = comp_count, nrow = length(xs))
+  
+  idx = 1
+  for (i in 1:MAX_COMP) {
+    if (p[i] > 0) {
+      
+      # Calculate the component density: weight * density(x | mu, sigma)
+      mean_i = theta[i, 1]
+      precision_i = theta[i, 2]
+      component_density = p[i] * normpdf(xs, mean_i, precision_i)
+      
+      # Increment to the overall density
+      overall_density = overall_density + component_density
+  
+      pdfs[, idx] = component_density
+      idx = idx + 1
+    }
+  }
+  
+  df = as.data.frame(cbind(xs, pdfs, overall_density))
+  colnames(df) = c("x", sprintf("comp-%d", 1:comp_count), "overall density")
+  long_df = melt(df ,  id.vars = 'x', variable.name = 'component')
+  colnames(long_df) = c("x", "component", "pdf")
+  long_df %>%
+    ggplot(aes(x, pdf)) +
+    geom_line(aes(colour = component), linewidth = 1) +
+    xlim(-5, 10) +
+    ggtitle("Estimated Densities (Component and Overall)")
+}
+```
+
+Plotting the estimated densities (with coarsening $\alpha = 50$).
+
+```{r coarsened-densities}
+plot_density_est(res_50$p, res_50$theta)
+```
+
+Plotting the estimated densities (without coarsening $\alpha = 10^{10}$).
+
+```{r no-coarsen-densities}
+plot_density_est(res_Inf$p, res_Inf$theta)
+```
+
+From the two density plots above, we can see that, without coarsening, the model created a
+larger number of small clusters. While this may improve the overall density
+estimation, this causes the posterior on the number of components to be
+inconsistent, diverging away from the true value $K_0=3$. Contrarily, in the
+coarsened case, fewer number of components are inferred to exist, which results
+in a less accurate density estimate but a more consistent inference on the
+number of components.
+
+# Summary
+
+## Key findings from simulations
+
+1. Under kernel mis-specification, the posterior distribution of the number of component is very inconsistent for the DPM. This is consistent with the research [@miller-harrison-2013; @chaumeny-et-al-2022].
+1. With posterior coarsening, the inconsistency problem under kernel mis-specification could be reduced.
+
+## Opportunities and challenges identified
+
+1.  A recent paper "Coarsened mixtures of hierarchical skew normal kernels for flow cytometry analyses" [@gorsky-et-al-2023] shows that it may be useful to develop extensions to the posterior coarsening algorithm for specific applications. A challenge would be to find such an application and customise.
+
+1.  The simulations in section 3 assumed a constant value of $\alpha$ for the posterior coarsening. As the authors of the original paper also suggest, it may be interesting to look into how adaptively varying $\alpha$ may change the behaviour of the algorithm [miller-dunson-2019].
+
+1.  Simulation runs took a very long time so iteration of ideas was slow - it was not feasible to experiment with large number of MCMC steps and much larger sample sizes - it was almost prohibitively slow (up to days) in the development of this notebook. So we must question: What do we need to do to make investigation efficient for the research project? Could the research project look into comparing the efficiencies of these algorithms? Anecdotally, Julia versions of the code above ran much faster than R, it may be interesting to explore the use of Julia for the research project.
+
+1.  Most of the code available for robust Bayesian inference reside on GitHub repositories owned by paper authors. There is certainly a gap of user friendly interfaces in R and, especially, in Python for implementation of these algorithms. This could also be an interesting gap to fill, by developing and publishing useful libraries for robust Bayesian clustering for these widely used languages.
+
+# References
