@@ -1,0 +1,294 @@
+---
+title: "MLDS Research Project"
+subtitle: "Phase 1"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "5th July 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+bibliography: ref.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/coding/mlds-final-project/Milestone2/")
+```
+
+# GBClust Example
+```{r}
+library(GBClust)
+library(ggplot2)
+library(mcclust)
+library(mvtnorm)
+
+rm(list = ls())
+
+d <- 2 # Dimension of the data
+H <- 2 # Number of clusters
+n <- 2000 # Sample size
+
+# Parameters
+sigma2 <- 1 # Variance
+G0 <- rep(1:H, each = n / H) # True clusters
+mu <- matrix(c(-1.2, 1.2, -1.2, 1.2), 2, 2) # Mean parameters
+
+# Simulation of the dataset
+set.seed(1234)
+dataset <- NULL
+for (h in 1:H) {
+  dataset <- rbind(
+    dataset,
+    rmvnorm(n = n / H, mean = mu[h, ], sigma = sigma2 * diag(d))
+  )
+}
+
+# K-means algorithm
+fit <- kmeans2(dataset, k = H, nstart = 10)
+
+# K-means Gibbs-sampling
+fit_gibbs <- kmeans_gibbs(
+  dataset,
+  k = H,
+  a_lambda = 0,
+  b_lambda = 0,
+  R = 10000,
+  burn_in = 1000,
+  trace = TRUE
+)
+
+Miscl <- function(S, cluster, medoids) {
+  pr_miscl <- numeric(nrow(S))
+  for (i in 1:n) {
+    Gi <- cluster[i]
+    pr_miscl[i] <- 1 - S[i, medoids[cluster[i]]]
+  }
+  pr_miscl
+}
+
+SGibbs <- mcclust::comp.psm(fit_gibbs$G)
+
+D <- as.matrix(dist(dataset, method = "euclidean"))^2 # Dissimilarity matrix
+MisclGibbs_pr <- Miscl(SGibbs, fit$cluster, comp_medoids(D, fit$cluster))
+
+p1 <- ggplot(
+  data = data.frame(dataset, Cluster = as.factor(fit$cluster)),
+  aes(x = X1, y = X2, col = Cluster, shape = Cluster)
+) +
+  geom_point(size = 2) +
+  theme_light() +
+  xlab("") +
+  ylab("") +
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("K-means clustering")
+
+p1
+ggsave("./tutorial/plot1_1.png", width = 8.8, height = 4.4)
+
+# Misclassification probabilities
+data_plot <- rbind(data.frame(dataset, Probability = MisclGibbs_pr))
+p2 <- ggplot(data = data_plot, aes(x = X1, y = X2, col = Probability)) +
+  geom_point(size = 2) +
+  theme_light() +
+  xlab("") +
+  ylab("") +
+  scale_color_distiller(
+    palette = "Spectral", direction = -1, limits = c(0, .75)
+  ) +
+  ggtitle("Misclassification probabilities")
+p2
+ggsave("./tutorial/plot1_2.png", width = 8.8, height = 4.4)
+```
+
+Distnace varying datasets
+
+```{r}
+rm(list = ls())
+library(dirichletprocess)
+library(tidyverse)
+library(mvtnorm)
+library(glue)
+library(rlist)
+
+# helper functions
+source("./utils.R", local = knitr::knit_global())
+
+N <- 10000
+DIMS <- 2
+K_0 <- 2
+
+seps <- seq(2.5, 5, 0.5)
+mu1 <- c(0, 0)
+cov <- diag(2)
+
+# pre-allocation
+gaussian_data <- matrix(data = NA, nrow = N * length(seps), ncol = DIMS)
+true_labels <- rep(NA, N * length(seps))
+separation <- rep(NA, N * length(seps))
+
+for (i in seq_along(seps)) {
+  sep <- seps[i]
+  mu2 <- mu1 + c(sep, 0)
+  means <- list(mu1, mu2)
+
+  for (j in 1:N) {
+    z_vec <- rmultinom(1, 1, c(0.5, 0.5))
+    z_group <- which(z_vec == 1)
+
+    curr_idx <- j + (i - 1) * N
+    gaussian_data[curr_idx, ] <- rmvnorm(
+      n = 1,
+      mean = means[[z_group]],
+      sigma = cov
+    )
+    true_labels[curr_idx] <- z_group
+    separation[curr_idx] <- sep
+  }
+}
+
+df <- as.data.frame(cbind(gaussian_data, true_labels, separation))
+df$true_labels <- as.factor(df$true_labels)
+colnames(df) <- c("x", "y", "true_label", "separation")
+df %>% ggplot(aes(x=x, y=y)) + geom_point(aes(col=true_label))
+
+mcmc_samples <- 100
+mcmc_its <- 1000
+li <- list()
+
+for (sep in seps) {
+  sep_df <- df %>% filter(separation == sep)
+  # plot_generated_data(sep_df[1:250, ], "Gaussian")
+  # ggsave(glue("./plots/gaussian_sep={sep}.png"))
+
+  trunc_data <- sep_df[1:250, 1:2]
+  dataTrans <- scale(trunc_data)
+  dpCluster <- DirichletProcessMvnormal(dataTrans)
+  dpCluster <- Fit(dpCluster, mcmc_its, progressBar = TRUE)
+
+  # Extract the number of components inferred
+  # weights = rev(dpCluster$weightsChain)
+  # for (idx in 1:mcmc_samples) {
+  #   # Find the number of components
+  #   n_comps = length(weights[[idx]])
+  #   all_ks[idx, j] = n_comps
+  # }
+
+  li <- list.append(li, dpCluster)
+}
+# results = list("dp_obj" = dpCluster, "all_ks" = all_ks)
+
+num_seps <- length(seps)
+all_ks <- matrix(data = NA, nrow = mcmc_samples, ncol = num_seps)
+
+for (j in 1:num_seps) {
+  dpCluster <- li[[j]]
+
+  # Extract the number of components inferred
+  weights <- rev(dpCluster$weightsChain)
+  for (idx in 1:mcmc_samples) {
+    # Find the number of components
+    n_comps <- length(weights[[idx]])
+    all_ks[idx, j] <- n_comps
+  }
+  results <- list("dp_obj" = dpCluster, "all_ks" = all_ks)
+}
+
+
+plot_posterior_comps <- function(
+    all_ks,
+    plot_title,
+    max_comp_in_plot = 10) {
+  # This function calculates the probability masses for the number of components
+  # from 0 to 10 from the last 500 mcmc samples, for all the sample sizes
+  # considered (20, 100, 250, 500), and plots the PMFs on the same axes.
+
+  # The number of dataset sizes considered
+  num_n <- ncol(all_ks)
+
+  # Allocate a matrix to store pmf results
+  pmf <- matrix(data = NA, nrow = max_comp_in_plot, ncol = num_n)
+
+  # calculate the PMF for number of components (0 to 10) for each of the sample
+  # sizes considered
+  for (n in 1:num_n) {
+    for (i in 1:max_comp_in_plot) {
+      pmf[i, n] <- sum(all_ks[, n] == i) / mcmc_samples
+    }
+  }
+
+  # Plot the results
+  df <- as.data.frame(cbind(1:max_comp_in_plot, pmf))
+  colnames(df) <- c("k", seps)
+  long_df <- melt(df, id.vars = "k", variable.name = "series")
+  colnames(long_df) <- c("k", "separations", "pmf")
+  pmf_plot <- long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separations), linewidth = 1) +
+    geom_vline(xintercept = 2, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:max_comp_in_plot) +
+    ggtitle(plot_title)
+
+  results <- list("pmf_data" = pmf, "pmf_plot" = pmf_plot)
+  return(results)
+}
+
+results <- plot_posterior_comps(
+  all_ks,
+  "Posterior Distribution of Number of Components (Well-specified)"
+)
+results$pmf_plot
+```
+
+```{r}
+map_k <- rep(NA, 21)
+map_k
+for (i in 1:21) {
+  map_k[i] <- which.max(results$pmf_data[, i])
+}
+plot(map_k)
+```
+
+
+# Separations study (computation in Julia)
+```{r}
+library(rhdf5)
+library(glue)
+library(reshape2)
+library(tidyverse)
+
+K_0 = 2
+
+m = 10
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+pmf = matrix(NA, nrow=m, ncol=length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=4.5-n={n}.jld"), "t_posteriors")
+  print(i_n)
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+
+# ggtitle(plot_title)
+  
+```
+
+
+
+
+
+
