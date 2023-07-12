@@ -15,7 +15,7 @@ bibliography: ref.bib
 
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-setwd("C:/Users/James/coding/mlds-final-project/Milestone2/")
+# setwd("C:/Users/James/coding/mlds-final-project/Milestone2/")
 ```
 
 # Introduction
@@ -142,53 +142,53 @@ $\gamma = 5$.
 set.seed(0)
 
 # True number of components
-K_0 = 3
-N = 500
-DIMS = 2
-ALPHA = 5
+K_0 <- 3
+N <- 500
+DIMS <- 2
+ALPHA <- 5
 
-alphas = rep((ALPHA/K_0), K_0)
-w = rdirichlet(n = 1, alpha = alphas)
+alphas <- rep((ALPHA / K_0), K_0)
+w <- rdirichlet(n = 1, alpha = alphas)
 print("Component weights")
 print(w)
 
-mean_1 = c(0, 0)
-mean_2 = c(-0.5, 1)
-mean_3 = c(1, -0.5)
-means = list(mean_1, mean_2, mean_3)
-cov = diag(DIMS) * 0.05
+mean_1 <- c(0, 0)
+mean_2 <- c(-0.5, 1)
+mean_3 <- c(1, -0.5)
+means <- list(mean_1, mean_2, mean_3)
+cov <- diag(DIMS) * 0.05
 ```
 
 The code below generates a dataset from a mixture of 3 Gaussian components.
 
 ```{r gen-gaussian-data}
-gaussian_data = matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels = rep(NA, N)
+gaussian_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
 for (i in 1:N) {
-  z_vec = rmultinom(1, 1, w)
-  z_group = which(z_vec == 1)
-  gaussian_data[i, ] = rmvnorm(1, mean = means[[z_group]], sigma = cov)
-  true_labels[i] = z_group
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  gaussian_data[i, ] <- rmvnorm(1, mean = means[[z_group]], sigma = cov)
+  true_labels[i] <- z_group
 }
 
-create_sim_df = function(data, true_labels) {
+create_sim_df <- function(data, true_labels) {
   # Helper function to create dataframes for simulation from
   # generated data
-  df = as.data.frame(cbind(data, true_labels))
-  df$true_labels = as.factor(df$true_labels)
-  colnames(df) = c("x", "y", "true_label")
+  df <- as.data.frame(cbind(data, true_labels))
+  df$true_labels <- as.factor(df$true_labels)
+  colnames(df) <- c("x", "y", "true_label")
   return(df)
 }
 
-gaussian_df = create_sim_df(gaussian_data, true_labels)
+gaussian_df <- create_sim_df(gaussian_data, true_labels)
 ```
 
 Visualise the generated data.
 
 ```{r vis-gen-data}
-plot_generated_data = function(df, name) {
-  df %>% 
-    ggplot() + 
+plot_generated_data <- function(df, name) {
+  df %>%
+    ggplot() +
     geom_point(mapping = aes(x = x, y = y, color = true_label)) +
     ggtitle(glue("Simulated data - Mixture of {K_0} {name}"))
 }
@@ -205,9 +205,9 @@ Restaurant Process sampler [@neal-2000]. Below details the MCMC settings:
 1.  Use the last 100 MCMC samples for subsequent inference.
 
 ```{r mcmc-settings}
-ns = c(20, 100, 250, 500)
-mcmc_its = 500
-mcmc_samples = 100
+ns <- c(20, 100, 250, 500)
+mcmc_its <- 500
+mcmc_samples <- 100
 ```
 
 The code below defines a function to fit the Dirichlet Process Multivariate
@@ -218,30 +218,29 @@ Gaussian Mixture model using the `dirichletprocess` library
 run_mcmc <- function(df, mcmc_its, mcmc_samples, ns, distribution_name) {
   # This function fits the Dirichlet Process Mixture Model with Multivariate
   # Gaussians.
-  
-  num_n = length(ns)
-  all_ks = matrix(data = NA, nrow = mcmc_samples, ncol = num_n)
+
+  num_n <- length(ns)
+  all_ks <- matrix(data = NA, nrow = mcmc_samples, ncol = num_n)
 
   for (j in 1:num_n) {
-  
     # Number of data points
-    n = ns[j]
-    
+    n <- ns[j]
+
     # Fit DPM
-    trunc_data = df[1:n, -3]
-    dataTrans = scale(trunc_data)
-    dpCluster =  DirichletProcessMvnormal(dataTrans)
+    trunc_data <- df[1:n, -3]
+    dataTrans <- scale(trunc_data)
+    dpCluster <- DirichletProcessMvnormal(dataTrans)
     dpCluster <- Fit(dpCluster, mcmc_its, progressBar = FALSE)
-  
-    # Extract the number of components inferred 
-    weights = rev(dpCluster$weightsChain)
+
+    # Extract the number of components inferred
+    weights <- rev(dpCluster$weightsChain)
     for (idx in 1:mcmc_samples) {
       # Find the number of components
-      n_comps = length(weights[[idx]])
-      all_ks[idx, j] = n_comps
+      n_comps <- length(weights[[idx]])
+      all_ks[idx, j] <- n_comps
     }
   }
-  results = list("dp_obj" = dpCluster, "all_ks" = all_ks)
+  results <- list("dp_obj" = dpCluster, "all_ks" = all_ks)
   return(results)
 }
 ```
@@ -250,51 +249,50 @@ Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
 Gaussian (well-specified).
 
 ```{r gaussian-dpm, cache=TRUE}
-results = run_mcmc(gaussian_df, mcmc_its, mcmc_samples, ns, "Gaussian")
-gaussian_all_ks = results$all_ks
-gaussian_dp_obj = results$dp_obj
+results <- run_mcmc(gaussian_df, mcmc_its, mcmc_samples, ns, "Gaussian")
+gaussian_all_ks <- results$all_ks
+gaussian_dp_obj <- results$dp_obj
 ```
 
 Define helper function to plot the posterior $p(k|x)$ with a range of sample
 sizes.
 
 ```{r pmf-plot}
-plot_posterior_comps = function(
-    all_ks, 
+plot_posterior_comps <- function(
+    all_ks,
     plot_title,
-    max_comp_in_plot = 10
-  ) {
+    max_comp_in_plot = 10) {
   # This function calculates the probability masses for the number of components
   # from 0 to 10 from the last 500 mcmc samples, for all the sample sizes
   # considered (20, 100, 250, 500), and plots the PMFs on the same axes.
-  
+
   # The number of dataset sizes considered
-  num_n = ncol(all_ks)
-  
+  num_n <- ncol(all_ks)
+
   # Allocate a matrix to store pmf results
-  pmf = matrix(data = NA, nrow = max_comp_in_plot, ncol = num_n) 
-  
+  pmf <- matrix(data = NA, nrow = max_comp_in_plot, ncol = num_n)
+
   # calculate the PMF for number of components (0 to 10) for each of the sample
   # sizes considered
   for (n in 1:num_n) {
     for (i in 1:max_comp_in_plot) {
-      pmf[i, n] = sum(all_ks[, n] == i) / mcmc_samples
+      pmf[i, n] <- sum(all_ks[, n] == i) / mcmc_samples
     }
   }
 
   # Plot the results
-  df = as.data.frame(cbind(1:max_comp_in_plot, pmf))
-  colnames(df) = c("k", ns)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "sample_sizes", "pmf")
-  pmf_plot = long_df %>%
+  df <- as.data.frame(cbind(1:max_comp_in_plot, pmf))
+  colnames(df) <- c("k", ns)
+  long_df <- melt(df, id.vars = "k", variable.name = "series")
+  colnames(long_df) <- c("k", "sample_sizes", "pmf")
+  pmf_plot <- long_df %>%
     ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = sample_sizes), linewidth=1) +
+    geom_line(aes(colour = sample_sizes), linewidth = 1) +
     geom_vline(xintercept = 3, linetype = "dotted", linewidth = 1.5) +
     scale_x_continuous(name = "k", breaks = 1:max_comp_in_plot) +
     ggtitle(plot_title)
-  
-  results = list("pmf_data" = pmf, "pmf_plot" = pmf_plot)
+
+  results <- list("pmf_data" = pmf, "pmf_plot" = pmf_plot)
   return(results)
 }
 ```
@@ -302,8 +300,8 @@ plot_posterior_comps = function(
 Plot posterior PMF on the number of components $p(k|x)$.
 
 ```{r plot-posterior-gaussian}
-results = plot_posterior_comps(
-  gaussian_all_ks, 
+results <- plot_posterior_comps(
+  gaussian_all_ks,
   "Posterior Distribution of Number of Components (Well-specified)"
 )
 results$pmf_plot
@@ -329,17 +327,17 @@ Generate Laplace Mixture data.
 ```{r gen-laplace-data}
 set.seed(0)
 
-laplace_data = matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels = rep(NA, N)
+laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
 
 for (i in 1:N) {
-  z_vec = rmultinom(1, 1, w)
-  z_group = which(z_vec == 1)
-  laplace_data[i, ] = rmvl(1, mu = means[[z_group]], Sigma = cov)
-  true_labels[i] = z_group
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
+  true_labels[i] <- z_group
 }
 
-laplace_df = create_sim_df(laplace_data, true_labels)
+laplace_df <- create_sim_df(laplace_data, true_labels)
 plot_generated_data(laplace_df, "Laplace")
 ```
 
@@ -347,17 +345,17 @@ Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
 Laplace distributions (mis-specified).
 
 ```{r laplace-dpm, cache=TRUE}
-results = run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "Laplace")
-laplace_all_ks = results$all_ks
-laplace_dp_obj = results$dp_obj
+results <- run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "Laplace")
+laplace_all_ks <- results$all_ks
+laplace_dp_obj <- results$dp_obj
 ```
 
 Plot posterior PMF on the number of components $p(k|x)$ in the mis-specified
 case (Laplace).
 
 ```{r plot-laplace-posterior}
-results = plot_posterior_comps(
-  laplace_all_ks, 
+results <- plot_posterior_comps(
+  laplace_all_ks,
   "Posterior Distribution of Number of Components (Mis-specified: Laplace)"
 )
 results$pmf_plot
@@ -373,7 +371,7 @@ The scatter plot below highlights this problem, showing the over-clustering
 caused.
 
 ```{r plot-laplace-clustering}
-plot(laplace_dp_obj) + 
+plot(laplace_dp_obj) +
   ggtitle("Example clustering from DPM on Laplace Mixtures") +
   xlab("x") +
   ylab("y")
@@ -389,31 +387,31 @@ generated using a mixture of bivariate skew-normal distributions.
 set.seed(0)
 
 # Parameters for skew normal distributions
-omega1 = matrix(c(0.1, 0, 0, 0.3), nrow = DIMS, byrow = TRUE)
-omega2 = matrix(c(0.3, 0, 0, 0.1), nrow = DIMS, byrow = TRUE)
-omega3 = matrix(c(0.4, 0, 0, 0.2), nrow = DIMS, byrow = TRUE)
-omegas = list(omega1, omega2, omega3)
-SN_ALPHA = c(1, 3)
-TAU = 1
+omega1 <- matrix(c(0.1, 0, 0, 0.3), nrow = DIMS, byrow = TRUE)
+omega2 <- matrix(c(0.3, 0, 0, 0.1), nrow = DIMS, byrow = TRUE)
+omega3 <- matrix(c(0.4, 0, 0, 0.2), nrow = DIMS, byrow = TRUE)
+omegas <- list(omega1, omega2, omega3)
+SN_ALPHA <- c(1, 3)
+TAU <- 1
 
 # Pre-allocate arrays
-skew_norm_data = matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels = rep(NA, N)
+skew_norm_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
 
 for (i in 1:N) {
-  z_vec = rmultinom(1, 1, w)
-  z_group = which(z_vec == 1)
-  skew_norm_data[i, ] = rmsn(
-    n = 1, 
-    xi = means[[z_group]], 
-    Omega = omegas[[z_group]], 
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  skew_norm_data[i, ] <- rmsn(
+    n = 1,
+    xi = means[[z_group]],
+    Omega = omegas[[z_group]],
     alpha = SN_ALPHA,
     tau = TAU
   )
-  true_labels[i] = z_group
+  true_labels[i] <- z_group
 }
 
-skew_norm_df = create_sim_df(skew_norm_data, true_labels)
+skew_norm_df <- create_sim_df(skew_norm_data, true_labels)
 plot_generated_data(skew_norm_df, "Skew Normals")
 ```
 
@@ -421,17 +419,17 @@ Run MCMC from multivariate Gaussian DPM with data generated from Mixture of
 Skew-Normal distributions.
 
 ```{r skew-norm-dpm, cache=TRUE}
-results = run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "skew-normal")
-skew_norm_all_ks = results$all_ks
-skew_norm_dp_obj = results$dp_obj
+results <- run_mcmc(laplace_df, mcmc_its, mcmc_samples, ns, "skew-normal")
+skew_norm_all_ks <- results$all_ks
+skew_norm_dp_obj <- results$dp_obj
 ```
 
 Plot posterior PMF on the number of components $p(k|x)$ in the mis-specified
 case (Skew-Normal).
 
 ```{r plot-skew-norm-posterior}
-results = plot_posterior_comps(
-  skew_norm_all_ks, 
+results <- plot_posterior_comps(
+  skew_norm_all_ks,
   "Posterior Distribution of Number of Components (Mis-specified: Skew Normal)"
 )
 results$pmf_plot
@@ -442,7 +440,7 @@ i.e. many small clusters are (wrongly) created, highlighting the inconsistency
 problem under kernel mis-specification.
 
 ```{r plot-skew-norm-clustering}
-plot(skew_norm_dp_obj) + 
+plot(skew_norm_dp_obj) +
   ggtitle("Example clustering from DPM on Skew-Normal Mixtures") +
   xlab("x") +
   ylab("y")
@@ -496,40 +494,38 @@ Generate data from a mixture of 3 univariate skew-normal distributions.
 
 ```{r gen-skew-norm-coarsen}
 # number of data points
-N = 500
+N <- 500
 
 # probability of component 1
-p1 = 0.2
-p2 = 0.5
+p1 <- 0.2
+p2 <- 0.5
 
 # location, scale, and shape of component 1
-l1 = -4
-s1 = 1
-a1 = 5  
+l1 <- -4
+s1 <- 1
+a1 <- 5
 
 # location, scale, and shape of component 2
-l2 = -1
-s2 = 2
-a2 = 5
+l2 <- -1
+s2 <- 2
+a2 <- 5
 
 # location, scale, and shape of component 3
-l3 = 8
-s3 = -2
-a3 = 5
+l3 <- 8
+s3 <- -2
+a3 <- 5
 
 # Generate a mixture of skew normal data with 20-30-50 split. The skewrnd
 # function is defined in the core.R script.
-x = rep(NA, N)
+x <- rep(NA, N)
 for (i in 1:N) {
-  prob = runif(1)
+  prob <- runif(1)
   if (prob < p1) {
-    x[i] = skewrnd(1, l1, s1, a1)
-  }
-  else if (prob < p2) {
-    x[i] = skewrnd(1, l2, s2, a2)
-  }
-  else {
-    x[i] = skewrnd(1, l3, s3, a3)
+    x[i] <- skewrnd(1, l1, s1, a1)
+  } else if (prob < p2) {
+    x[i] <- skewrnd(1, l2, s2, a2)
+  } else {
+    x[i] <- skewrnd(1, l3, s3, a3)
   }
 }
 ```
@@ -555,51 +551,51 @@ $\alpha_2 = 10^{10}$ to represent the case with no coarsening.
 Run MCMC on coarsened posterior.
 
 ```{r run-coarsen-mcmc, cache=TRUE}
-run_coarsen_mcmc = function(x, alpha = 100, mcmc_samples = 2500) {
-  n = length(x)
+run_coarsen_mcmc <- function(x, alpha = 100, mcmc_samples = 2500) {
+  n <- length(x)
 
   # Following equation 2.3 (Miller and Dunson, 2018)
-  zeta = alpha / (alpha + n) 
-  res = sampler(
-    x, # Data 
+  zeta <- alpha / (alpha + n)
+  res <- sampler(
+    x, # Data
     mcmc_samples, # Number of MCMC samples
     zeta # Power to raise likelihood to
   )
   return(res)
-}  
+}
 
 # With coarsening alpha << n
-mcmc_samples = 2500
-all_ks = matrix(NA, nrow = mcmc_samples, ncol = 2)
+mcmc_samples <- 2500
+all_ks <- matrix(NA, nrow = mcmc_samples, ncol = 2)
 
-res_50 = run_coarsen_mcmc(x, alpha = 50, mcmc_samples = mcmc_samples)
-all_ks[, 1] = res_50$k_r
+res_50 <- run_coarsen_mcmc(x, alpha = 50, mcmc_samples = mcmc_samples)
+all_ks[, 1] <- res_50$k_r
 
 # Without coarsening alpha >> n
-res_Inf = run_coarsen_mcmc(x, alpha = 10^10, mcmc_samples = mcmc_samples)
-all_ks[, 2] = res_Inf$k_r
+res_Inf <- run_coarsen_mcmc(x, alpha = 10^10, mcmc_samples = mcmc_samples)
+all_ks[, 2] <- res_Inf$k_r
 ```
 
 Plot the posterior on the number of components $k$ with coarsening ($\alpha = 50$) and without coarsening ($\alpha = 10^{10}$).
 
 ```{r plot-coarsening-posteriors}
-max_comp_in_plot = 10
-pmf = matrix(data = NA, nrow = max_comp_in_plot, ncol = 2) 
+max_comp_in_plot <- 10
+pmf <- matrix(data = NA, nrow = max_comp_in_plot, ncol = 2)
 
 for (i in 1:2) {
   for (j in 1:max_comp_in_plot) {
-    pmf[j, i] = sum(all_ks[, i] == j) / mcmc_samples
+    pmf[j, i] <- sum(all_ks[, i] == j) / mcmc_samples
   }
 }
 
-df = data.frame(cbind(1:max_comp_in_plot, pmf))
-colnames(df) = c("k", "alpha=50", "alpha=10^10")
-long_df = melt(df,  id.vars = "k", variable.name = "alpha")
-colnames(long_df) = c("k", "alpha", "pmf")
+df <- data.frame(cbind(1:max_comp_in_plot, pmf))
+colnames(df) <- c("k", "alpha=50", "alpha=10^10")
+long_df <- melt(df, id.vars = "k", variable.name = "alpha")
+colnames(long_df) <- c("k", "alpha", "pmf")
 
 long_df %>%
   ggplot(aes(x = k, y = pmf)) +
-  geom_line(aes(colour = alpha), linewidth=1) +
+  geom_line(aes(colour = alpha), linewidth = 1) +
   geom_vline(xintercept = 3, linetype = "dotted", linewidth = 1.5) +
   scale_x_continuous(name = "k", breaks = 1:max_comp_in_plot) +
   ggtitle("Posterior PMFs on number of components")
@@ -618,40 +614,39 @@ densities and the overall density. The code below defines a helper function to
 plot the component and the overall densities on the same axes.
 
 ```{r plot_density_est}
-plot_density_est = function(p, theta) {
+plot_density_est <- function(p, theta) {
   # Helper function to plot the estimated component and overall densities
   # p - component weights
   # theta - component parameters (mean, precision)
-  
-  xmin = -5
-  xmax = 10
-  xs = seq(xmin, xmax, length = 1000)
-  
-  comp_count = length(which(p > 0))
-  overall_density = rep(0, length(xs))
-  pdfs = matrix(NA, ncol = comp_count, nrow = length(xs))
-  
-  idx = 1
+
+  xmin <- -5
+  xmax <- 10
+  xs <- seq(xmin, xmax, length = 1000)
+
+  comp_count <- length(which(p > 0))
+  overall_density <- rep(0, length(xs))
+  pdfs <- matrix(NA, ncol = comp_count, nrow = length(xs))
+
+  idx <- 1
   for (i in 1:MAX_COMP) {
     if (p[i] > 0) {
-      
       # Calculate the component density: weight * density(x | mu, sigma)
-      mean_i = theta[i, 1]
-      precision_i = theta[i, 2]
-      component_density = p[i] * normpdf(xs, mean_i, precision_i)
-      
+      mean_i <- theta[i, 1]
+      precision_i <- theta[i, 2]
+      component_density <- p[i] * normpdf(xs, mean_i, precision_i)
+
       # Increment to the overall density
-      overall_density = overall_density + component_density
-  
-      pdfs[, idx] = component_density
-      idx = idx + 1
+      overall_density <- overall_density + component_density
+
+      pdfs[, idx] <- component_density
+      idx <- idx + 1
     }
   }
-  
-  df = as.data.frame(cbind(xs, pdfs, overall_density))
-  colnames(df) = c("x", sprintf("comp-%d", 1:comp_count), "overall density")
-  long_df = melt(df ,  id.vars = 'x', variable.name = 'component')
-  colnames(long_df) = c("x", "component", "pdf")
+
+  df <- as.data.frame(cbind(xs, pdfs, overall_density))
+  colnames(df) <- c("x", sprintf("comp-%d", 1:comp_count), "overall density")
+  long_df <- melt(df, id.vars = "x", variable.name = "component")
+  colnames(long_df) <- c("x", "component", "pdf")
   long_df %>%
     ggplot(aes(x, pdf)) +
     geom_line(aes(colour = component), linewidth = 1) +
