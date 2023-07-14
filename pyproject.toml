@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["James Lee <jameslee.98331@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "mlds_final_project" }]
 
 [tool.poetry.dependencies]
 python = "3.9.14"
@@ -13,10 +12,7 @@ pandas = "1.5.3"
 ipykernel = "6.23.0"
 matplotlib = "3.7.1"
 scipy = "1.10.1"
-pymc = "^5.3.1"
-pystan = "^3.7.0"
-nest-asyncio = "^1.5.6"
-
+umap-learn = "^0.5.3"
 
 [build-system]
 requires = ["poetry-core"]

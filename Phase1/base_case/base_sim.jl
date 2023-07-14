@@ -35,7 +35,7 @@ for (i_n, n) in enumerate(ns)
 
             # MFM with univariate Normal components
             dpm_options = BayesianMixtures.options(
-                "MVN",
+                "MVNaaC",
                 "DPM",
                 data,
                 mcmc_its,
@@ -43,7 +43,7 @@ for (i_n, n) in enumerate(ns)
                 t_max=t_max
             )
             mfm_options = BayesianMixtures.options(
-                "MVN",
+                "MVNaaC",
                 "MFM",
                 data,
                 mcmc_its,

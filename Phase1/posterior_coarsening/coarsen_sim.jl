@@ -1,21 +1,23 @@
 module Simulation
-
+using Distributions
+using PyPlot
 using HDF5
 using JLD
-using PyPlot
+using Random
 
-include("./coarsen_setup.jl")
+include("setup.jl")
+
+output_directory = "/Users/jameslee/coding/mlds-final-project/comp_outputs/"
 
 # Settings
-# ns = [20, 100, 500, 2000, 10000] #, 100000]  # sample sizes n to use
-ns = [100, 250, 500, 1000, 2500, 5000, 10000]
-alphas = [Inf, 10000, 1000, 100]  # robustification params alpha to use
+ns = [100, 250, 500, 1000, 2500, 5000, 10000] # sample sizes n to use
+alphas = [Inf, 10^5, 10^4, 10^3, 10^2, 10]  # robustification params alpha to use
 n_reps = 5  # number of times to run the simulation
-mcmc_its = 100000  # number of MCMC iterations
+mcmc_its = 10^5  # number of MCMC iterations
 mcmc_burn = Int(mcmc_its / 10)  # number of iterations to discard as burn-in
 t_max = 10
 
-for (i_a, alpha) in enumerate(alphas)
+for alpha in alphas
     for (i_n, n) in enumerate(ns)
 
         k_posteriors = zeros(t_max, n_reps)
@@ -27,25 +29,31 @@ for (i_a, alpha) in enumerate(alphas)
                 for j = 1:n
             ] # Sample data
 
-            # Run sampler
-            zeta = alpha / (n + alpha)
+            zeta = (1 / n) / ((1 / n) + (1 / alpha))
 
+            println("n = $n, rep = $rep, alpha = $alpha, zeta=$zeta")
+
+            # Run sampler
             elapsed_time = (
                 @elapsed p, theta, k_r, v_r, art, arv, m_r, s_r = sampler(
                 data, mcmc_its, t_max, c, sigma, zeta
             )
             )
+
             time_per_step = elapsed_time / mcmc_its
-            println("n = $n, rep = $rep, alpha = $alpha")
             println("Elapsed time = $elapsed_time seconds")
             println("Time per step = $time_per_step seconds")
-            println()
 
             # Compute posterior on k
-            counts, bins = hist(k_r[mcmc_burn+1:end], range(0, t_max, t_max + 1))
+            counts, bins = hist(k_r[mcmc_burn+1:end], range(1, t_max + 1, t_max + 1))
             k_posteriors[:, rep] = counts / (mcmc_its - mcmc_burn)
         end
-        save("../comp_outputs/k_posteriors-alpha=$alpha-n=$n.jld", "k_posteriors", k_posteriors)
+
+        save_filename = "k_posteriors-alpha=$alpha-n=$n.jld"
+        save_fullpath = output_directory * save_filename
+        save(save_fullpath, "k_posteriors", k_posteriors)
+        println("Saved to $save_fullpath")
+        println()
     end
 end
 

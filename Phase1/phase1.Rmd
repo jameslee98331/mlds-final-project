@@ -267,7 +267,8 @@ pmf = matrix(NA, nrow=m, ncol=length(ns))
 
 for (i_n in seq_along(ns)) {
   n = ns[i_n]
-  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=4.5-n={n}.jld"), "t_posteriors")
+  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=2.5-n={n}.jld"), "t_posteriors")
+  # k_posteriors = h5read(glue("../comp_outputs/k_posteriors-mvn-mfm-sep=2.25-n={n}.jld"), "k_posteriors")
   print(i_n)
   pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
 }
@@ -287,7 +288,62 @@ pmf_plot
   
 ```
 
+```{r}
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 10
+pmf = matrix(NA, nrow=m, ncol=length(ns))
 
+
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=4.5-n={n}.jld"), "t_posteriors")
+  print(i_n)
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+# Posterior Coarsening
+```{r}
+m = 10
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+pmf = matrix(NA, nrow=m, ncol=length(ns))
+
+# k_posteriors = h5read(glue("../comp_outputs/k_posteriors-alpha=Inf.jld"), "k_posteriors")
+# k_posteriors
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/k_posteriors-alpha=Inf-n={n}.jld"), "k_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+h5read("~/coding/mlds-final-project/Phase1/comp_outputs/k_posteriors-alpha=Inf-n=250.jld")
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) +
+  ggtitle("")
+pmf_plot
+```
+```{r}
+rmvnorm(1, mean=mean, cov=cov)
+```
 
 
 
