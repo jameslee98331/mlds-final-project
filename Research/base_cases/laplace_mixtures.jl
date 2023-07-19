@@ -1,23 +1,17 @@
 using BayesianMixtures
-using Distributions
 using HDF5
 using JLD
 using Random
 
-# Simulate some data
-mean1 = [0, 0]
-C = [1 0; 0 1]
-d1 = MvNormal(mean1, C)
-p1 = 0.5
-
 # options
 mcmc_its = 10^5 # total number of MCMC sweeps to run
 mcmc_burn = Int(mcmc_its / 10) # number of burn-in iterations
-t_max = 100
+t_max = 127
 
-ns = [50, 100, 250, 500, 1000, 2500, 5000, 10000]
+ns = [5000, 10000]
 n_reps = 5
-all_data = h5read("./data/laplace_data.jld", "laplace_data")
+
+all_data = h5read("./data_inputs/laplace_data.jld", "laplace_data")
 data_name = "laplace_mixtures"
 
 for (i_n, n) in enumerate(ns)
@@ -30,6 +24,12 @@ for (i_n, n) in enumerate(ns)
         # shuflle dataset and extract a subset of length n
         shuffled_data = shuffle(all_data)
         data = [shuffled_data[j, :]::Array{Float64} for j in 1:n]
+        
+        save(
+            "./data_inputs/raw-data-n=$n-$data_name.jld",
+            "data",
+            data
+        )
 
         # setup sampler options
         dpm_options = BayesianMixtures.options(
