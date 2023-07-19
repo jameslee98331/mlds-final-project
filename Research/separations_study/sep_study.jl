@@ -2,12 +2,8 @@ using BayesianMixtures
 using Distributions
 using HDF5
 using JLD
-
-# Simulate some data
-mean1 = [0, 0]
-C = [1 0; 0 1]
-d1 = MvNormal(mean1, C)
-p1 = 0.5
+using StatsBase
+using Random
 
 # options
 mcmc_its = 100000 # total number of MCMC sweeps to run
@@ -16,22 +12,24 @@ t_max = 100
 
 ns = [100, 250, 500, 1000, 2500, 5000, 10000]
 n_reps = 5
-seps = 1:0.25:5
+seps = 1:0.1:5
 n_seps = length(seps)
 
 for (i_n, n) in enumerate(ns)
     for (i_sep, sep) in enumerate(seps)
 
+        all_data = h5read("./data_inputs/gaussian_data-sep=$sep.jld", "gaussian_data")
+        dt = fit(ZScoreTransform, all_data, dims=1)
+        standardised_data = StatsBase.transform(dt, all_data)
+
         t_posteriors = zeros(t_max, n_reps)
         k_posteriors = zeros(t_max, n_reps)
 
         for rep in 1:n_reps
-            mean2 = [sep, 0]
-            d2 = MvNormal(mean2, C)
-            data = [
-                (rand() < p1 ? rand(d1, 1) : rand(d2, 1))[:]::Array{Float64,1}
-                for j in 1:n
-            ]
+
+            Random.seed!(n + rep) # Reset RNG
+            shuffled_data = shuffle(standardised_data)
+            data = [shuffled_data[j, :]::Array{Float64} for j in 1:n]
 
             # MFM with univariate Normal components
             dpm_options = BayesianMixtures.options(
@@ -77,7 +75,7 @@ for (i_n, n) in enumerate(ns)
             k_posteriors
         )
 
-        println("Saved t_posteriors for sep=$sep")
+        println("Saved posteriors for n=$n, sep=$sep")
         println()
     end
 end

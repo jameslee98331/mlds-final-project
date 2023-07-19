@@ -1,0 +1,151 @@
+---
+title: "MLDS Research Project"
+subtitle: "Phase 1 - Base Cases"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "5th July 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+bibliography: ref.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+
+```{r}
+setwd("~/coding/mlds-final-project/Research/base_cases")
+source("../utils.R", local = knitr::knit_global())
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(glue)
+library(rlist)
+library(rhdf5)
+library(reshape2)
+
+library(mvtnorm)
+library(LaplacesDemon)
+library(sn)
+```
+
+# Create Gaussian mixture datasets with inreasing separation between components
+```{r}
+set.seed(0)
+
+# True number of components
+K_0 <- 2
+N <- 10^4
+DIMS <- 2
+ALPHA <- 5
+
+
+alphas <- rep((ALPHA / K_0), K_0)
+w <- rdirichlet(n = 1, alpha = alphas)
+print("Component weights")
+print(w)
+
+seps = seq(1, 5, 0.1)
+for (sep in seps) {
+  mean_1 <- runif(2)
+  theta = runif(1, min = 0, max = 2 * pi)
+  mean_2 <- c(mean_1[1] + sep * cos(theta), mean_1[2] + sep * sin(theta))
+  means <- list(mean_1, mean_2)
+  cov <- diag(DIMS) * 0.05
+  
+  gaussian_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    gaussian_data[i, ] <- rmvnorm(1, mean = means[[z_group]], sigma = cov)
+    true_labels[i] <- z_group
+  }
+  
+  scaled_gaussian_data = scale(gaussian_data)
+  gaussian_df <- create_sim_df(scaled_gaussian_data, true_labels)
+  p1 = plot_generated_data(gaussian_df, "Gaussian")
+  print(p1)
+  
+  sep_string = format(round(sep, 2), nsmall = 2)
+  save_name = glue("./data_inputs/gaussian_data-sep={sep_string}.jld")
+  h5save(gaussian_data, file = save_name, name = "gaussian_data")
+}
+
+```
+
+
+## Multivariate laplace
+
+using the same mean and covariance definitions
+
+```{r}
+laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
+  true_labels[i] <- z_group
+}
+
+laplace_df <- create_sim_df(laplace_data, true_labels)
+plot_generated_data(laplace_df, "Laplace")
+
+h5save(laplace_data, file="../data/laplace_data.jld", name="laplace_data")
+```
+
+## Skew-normal distribution
+
+```{r}
+omega <- matrix(c(0.1, 0, 0, 0.7), nrow = DIMS, byrow = TRUE)
+SN_ALPHA <- c(1, 3)
+TAU <- 1
+
+# Pre-allocate arrays
+skew_norm_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  skew_norm_data[i, ] <- rmsn(
+    n = 1,
+    xi = means[[z_group]],
+    Omega = omega,
+    alpha = SN_ALPHA,
+    tau = TAU
+  )
+  true_labels[i] <- z_group
+}
+skew_norm_df <- create_sim_df(skew_norm_data, true_labels)
+plot_generated_data(skew_norm_df, "Skew Normals")
+
+h5save(skew_norm_data, file="../data/skew_norm_data.jld", name="skew_norm_data")
+```
+
+## Student's t
+```{r}
+student_t_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  student_t_data[i, ] <- rmvt(1, mu = means[[z_group]], S = cov, df = 3)
+  true_labels[i] <- z_group
+}
+
+student_t_df <- create_sim_df(student_t_data, true_labels)
+plot_generated_data(student_t_df, "Student's t")
+
+h5save(student_t_data, file="../data/student_t_data.jld", name="student_t_data")
