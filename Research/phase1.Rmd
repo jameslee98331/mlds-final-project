@@ -15,18 +15,34 @@ bibliography: ref.bib
 
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+
+```{r}
 setwd("~/coding/mlds-final-project/Milestone2/")
+source("./utils.R", local = knitr::knit_global())
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(glue)
+library(rlist)
+library(rhdf5)
+library(reshape2)
+
+library(mvtnorm)
+library(LaplacesDemon)
+library(sn)
+
+library(dirichletprocess)
+library(GBClust)
+library(mcclust)
 ```
 
 # GBClust Example
 ```{r}
-library(GBClust)
-library(ggplot2)
-library(mcclust)
-library(mvtnorm)
-
-rm(list = ls())
-
 d <- 2 # Dimension of the data
 H <- 2 # Number of clusters
 n <- 2000 # Sample size
@@ -104,18 +120,7 @@ ggsave("./tutorial/plot1_2.png", width = 8.8, height = 4.4)
 ```
 
 Distnace varying datasets
-
 ```{r}
-rm(list = ls())
-library(dirichletprocess)
-library(tidyverse)
-library(mvtnorm)
-library(glue)
-library(rlist)
-
-# helper functions
-source("./utils.R", local = knitr::knit_global())
-
 N <- 10000
 DIMS <- 2
 K_0 <- 2
@@ -251,14 +256,8 @@ for (i in 1:21) {
 plot(map_k)
 ```
 
-
 # Separations study (computation in Julia)
 ```{r}
-library(rhdf5)
-library(glue)
-library(reshape2)
-library(tidyverse)
-
 K_0 = 2
 
 m = 10
@@ -267,7 +266,7 @@ pmf = matrix(NA, nrow=m, ncol=length(ns))
 
 for (i_n in seq_along(ns)) {
   n = ns[i_n]
-  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=2.5-n={n}.jld"), "t_posteriors")
+  k_posteriors = h5read(glue("../comp_outputs/t_posteriors-mvn-dpm-sep=1.75-n={n}.jld"), "t_posteriors")
   # k_posteriors = h5read(glue("../comp_outputs/k_posteriors-mvn-mfm-sep=2.25-n={n}.jld"), "k_posteriors")
   print(i_n)
   pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
@@ -292,8 +291,6 @@ pmf_plot
 ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
 m = 10
 pmf = matrix(NA, nrow=m, ncol=length(ns))
-
-
 
 for (i_n in seq_along(ns)) {
   n = ns[i_n]
@@ -341,10 +338,198 @@ pmf_plot = long_df %>%
   ggtitle("")
 pmf_plot
 ```
+
+
+# Simulation environment datasets
+
+## Multivariate Normal
+
+$$
+\mu_1 = (X, Y) \sim \mathcal{U}_2(0, 1) \\
+\mu_2 = (X + r\cos(\theta), Y + r\sin(\theta)), \quad \theta \sim \mathcal{U}(0, 2\pi) \\
+$$
 ```{r}
-rmvnorm(1, mean=mean, cov=cov)
+set.seed(0)
+
+# True number of components
+K_0 <- 2
+N <- 10^6
+DIMS <- 2
+ALPHA <- 5
+
+alphas <- rep((ALPHA / K_0), K_0)
+w <- rdirichlet(n = 1, alpha = alphas)
+print("Component weights")
+print(w)
+
+mean_1 <- runif(2)
+sep = 1
+theta = runif(1, min = 0, max = 2 * pi)
+mean_2 <- c(mean_1[1] + sep * cos(theta), mean_1[2] + sep * sin(theta))
+means <- list(mean_1, mean_2)
+cov <- diag(DIMS) * 0.05
+
+gaussian_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  gaussian_data[i, ] <- rmvnorm(1, mean = means[[z_group]], sigma = cov)
+  true_labels[i] <- z_group
+}
+
+gaussian_df <- create_sim_df(gaussian_data, true_labels)
+plot_generated_data(gaussian_df, "Gaussian")
+
+h5save(gaussian_data, file="../data/gaussian_data.jld", name="gaussian_data")
 ```
 
 
+## Multivariate laplace
+
+using the same mean and covariance definitions
+
+```{r}
+laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
+  true_labels[i] <- z_group
+}
+
+laplace_df <- create_sim_df(laplace_data, true_labels)
+plot_generated_data(laplace_df, "Laplace")
+
+h5save(laplace_data, file="../data/laplace_data.jld", name="laplace_data")
+```
+
+## Skew-normal distribution
+
+```{r}
+omega <- matrix(c(0.1, 0, 0, 0.7), nrow = DIMS, byrow = TRUE)
+SN_ALPHA <- c(1, 3)
+TAU <- 1
+
+# Pre-allocate arrays
+skew_norm_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  skew_norm_data[i, ] <- rmsn(
+    n = 1,
+    xi = means[[z_group]],
+    Omega = omega,
+    alpha = SN_ALPHA,
+    tau = TAU
+  )
+  true_labels[i] <- z_group
+}
+skew_norm_df <- create_sim_df(skew_norm_data, true_labels)
+plot_generated_data(skew_norm_df, "Skew Normals")
+
+h5save(skew_norm_data, file="../data/skew_norm_data.jld", name="skew_norm_data")
+```
+
+## Student's t
+```{r}
+student_t_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+true_labels <- rep(NA, N)
+
+for (i in 1:N) {
+  z_vec <- rmultinom(1, 1, w)
+  z_group <- which(z_vec == 1)
+  student_t_data[i, ] <- rmvt(1, mu = means[[z_group]], S = cov, df = 3)
+  true_labels[i] <- z_group
+}
+
+student_t_df <- create_sim_df(student_t_data, true_labels)
+plot_generated_data(student_t_df, "Student's t")
+
+h5save(student_t_data, file="../data/student_t_data.jld", name="student_t_data")
+```
 
 
+## GBClust
+```{r}
+d <- 2 # Dimension of the dataOO)
+H <- 2 # Number of clusters
+n <- 500 # Sample size
+
+# K-means algorithm
+dataset = skew_norm_data[1:n, ]
+dataset = laplace_data[1:n, ]
+
+fit <- kmeans2(dataset, k = H, nstart = 10)
+
+# K-means Gibbs-sampling
+fit_gibbs <- kmeans_gibbs(
+  dataset,
+  k = H,
+  a_lambda = 0,
+  b_lambda = 0,
+  R = 10000,
+  burn_in = 1000,
+  trace = TRUE
+)
+
+fit_gibbs <- Minkowski_gibbs(
+  dataset,
+  k = H,
+  p = 2,
+  a_lambda = 0,
+  b_lambda = 0,
+  R = 10000,
+  burn_in = 1000,
+  trace = TRUE
+)
+
+Miscl <- function(S, cluster, medoids) {
+  pr_miscl <- numeric(nrow(S))
+  for (i in 1:n) {
+    Gi <- cluster[i]
+    pr_miscl[i] <- 1 - S[i, medoids[cluster[i]]]
+  }
+  pr_miscl
+}
+
+SGibbs <- mcclust::comp.psm(fit_gibbs$G)
+
+D <- as.matrix(dist(dataset, method = "euclidean"))^2 # Dissimilarity matrix
+MisclGibbs_pr <- Miscl(SGibbs, fit$cluster, comp_medoids(D, fit$cluster))
+
+p1 <- ggplot(
+  data = data.frame(dataset, Cluster = as.factor(fit$cluster)),
+  aes(x = X1, y = X2, col = Cluster, shape = Cluster)
+) +
+  geom_point(size = 2) +
+  theme_light() +
+  xlab("") +
+  ylab("") +
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("K-means clustering")
+
+p1
+ggsave("./tutorial/plot1_1.png", width = 8.8, height = 4.4)
+
+# Misclassification probabilities
+data_plot <- rbind(data.frame(dataset, Probability = MisclGibbs_pr))
+p2 <- ggplot(data = data_plot, aes(x = X1, y = X2, col = Probability)) +
+  geom_point(size = 2) +
+  theme_light() +
+  xlab("") +
+  ylab("") +
+  scale_color_distiller(
+    palette = "Spectral", direction = -1, limits = c(0, 1)
+  ) +
+  ggtitle("Misclassification probabilities")
+p2
+
+
+ggsave("./tutorial/plot1_2.png", width = 8.8, height = 4.4)
+
+```
