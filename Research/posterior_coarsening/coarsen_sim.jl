@@ -7,8 +7,6 @@ using Random
 
 include("setup.jl")
 
-output_directory = "/Users/jameslee/coding/mlds-final-project/comp_outputs/"
-
 # Settings
 ns = [100, 250, 500, 1000, 2500, 5000, 10000] # sample sizes n to use
 alphas = [Inf, 10^5, 10^4, 10^3, 10^2, 10]  # robustification params alpha to use
@@ -50,7 +48,7 @@ for alpha in alphas
         end
 
         save_filename = "k_posteriors-alpha=$alpha-n=$n.jld"
-        save_fullpath = output_directory * save_filename
+        save_fullpath = "./comp_outputs/" * save_filename
         save(save_fullpath, "k_posteriors", k_posteriors)
         println("Saved to $save_fullpath")
         println()

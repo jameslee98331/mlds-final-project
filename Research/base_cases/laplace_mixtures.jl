@@ -17,7 +17,7 @@ t_max = 100
 
 ns = [50, 100, 250, 500, 1000, 2500, 5000, 10000]
 n_reps = 5
-all_data = h5read("../../data/laplace_data.jld", "laplace_data")
+all_data = h5read("./data/laplace_data.jld", "laplace_data")
 data_name = "laplace_mixtures"
 
 for (i_n, n) in enumerate(ns)

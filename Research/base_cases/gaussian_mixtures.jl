@@ -17,7 +17,7 @@ t_max = 100
 
 ns = [50, 100, 250, 500, 1000, 2500, 5000, 10000]
 n_reps = 5
-all_data = h5read("../../data/gaussian_data.jld", "gaussian_data")
+all_data = h5read("./data_inputs/gaussian_data.jld", "gaussian_data")
 data_name = "gaussian_mixtures"
 
 for (i_n, n) in enumerate(ns)
@@ -32,7 +32,7 @@ for (i_n, n) in enumerate(ns)
         data = [shuffled_data[j, :]::Array{Float64} for j in 1:n]
 
         save(
-            "./input_data/raw-data-mvn-dpm-n=$n-$data_name.jld",
+            "./data_inputs/raw-data-mvn-dpm-n=$n-$data_name.jld",
             "data",
             data
         )
