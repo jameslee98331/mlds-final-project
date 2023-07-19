@@ -2,11 +2,6 @@
 .python-version
 .venv/
 
-# experimentation folder
-sandbox/
-comp_outputs/
-data/
-
 # vscode settings
 .vscode/
 
