@@ -1,0 +1,834 @@
+n = 100, rep = 1, alpha = 10.0, zeta=0.09090909090909091
+Elapsed time = 12.287314641 seconds
+Time per step = 0.00012287314641 seconds
+n = 100, rep = 2, alpha = 10.0, zeta=0.09090909090909091
+Elapsed time = 11.147469865 seconds
+Time per step = 0.00011147469864999999 seconds
+n = 100, rep = 3, alpha = 10.0, zeta=0.09090909090909091
+Elapsed time = 11.425113061 seconds
+Time per step = 0.00011425113060999999 seconds
+n = 100, rep = 4, alpha = 10.0, zeta=0.09090909090909091
+Elapsed time = 10.892319616 seconds
+Time per step = 0.00010892319616 seconds
+n = 100, rep = 5, alpha = 10.0, zeta=0.09090909090909091
+Elapsed time = 11.525725349 seconds
+Time per step = 0.00011525725349 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 10.0, zeta=0.03846153846153846
+Elapsed time = 24.359727397 seconds
+Time per step = 0.00024359727397 seconds
+n = 250, rep = 2, alpha = 10.0, zeta=0.03846153846153846
+Elapsed time = 23.737088985 seconds
+Time per step = 0.00023737088984999999 seconds
+n = 250, rep = 3, alpha = 10.0, zeta=0.03846153846153846
+Elapsed time = 23.826443416 seconds
+Time per step = 0.00023826443416 seconds
+n = 250, rep = 4, alpha = 10.0, zeta=0.03846153846153846
+Elapsed time = 24.538897245 seconds
+Time per step = 0.00024538897245 seconds
+n = 250, rep = 5, alpha = 10.0, zeta=0.03846153846153846
+Elapsed time = 23.688980384 seconds
+Time per step = 0.00023688980384000002 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 10.0, zeta=0.0196078431372549
+Elapsed time = 45.018115255 seconds
+Time per step = 0.00045018115255 seconds
+n = 500, rep = 2, alpha = 10.0, zeta=0.0196078431372549
+Elapsed time = 45.28040026 seconds
+Time per step = 0.0004528040026 seconds
+n = 500, rep = 3, alpha = 10.0, zeta=0.0196078431372549
+Elapsed time = 44.463124383 seconds
+Time per step = 0.00044463124383 seconds
+n = 500, rep = 4, alpha = 10.0, zeta=0.0196078431372549
+Elapsed time = 46.586552066 seconds
+Time per step = 0.00046586552066 seconds
+n = 500, rep = 5, alpha = 10.0, zeta=0.0196078431372549
+Elapsed time = 44.88308119 seconds
+Time per step = 0.0004488308119 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 10.0, zeta=0.009900990099009901
+Elapsed time = 86.422493315 seconds
+Time per step = 0.00086422493315 seconds
+n = 1000, rep = 2, alpha = 10.0, zeta=0.009900990099009901
+Elapsed time = 85.634962001 seconds
+Time per step = 0.00085634962001 seconds
+n = 1000, rep = 3, alpha = 10.0, zeta=0.009900990099009901
+Elapsed time = 87.104046679 seconds
+Time per step = 0.0008710404667900001 seconds
+n = 1000, rep = 4, alpha = 10.0, zeta=0.009900990099009901
+Elapsed time = 83.064666878 seconds
+Time per step = 0.00083064666878 seconds
+n = 1000, rep = 5, alpha = 10.0, zeta=0.009900990099009901
+Elapsed time = 85.482432846 seconds
+Time per step = 0.00085482432846 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 10.0, zeta=0.00398406374501992
+Elapsed time = 213.6847607 seconds
+Time per step = 0.002136847607 seconds
+n = 2500, rep = 2, alpha = 10.0, zeta=0.00398406374501992
+Elapsed time = 213.985249982 seconds
+Time per step = 0.00213985249982 seconds
+n = 2500, rep = 3, alpha = 10.0, zeta=0.00398406374501992
+Elapsed time = 211.167198542 seconds
+Time per step = 0.00211167198542 seconds
+n = 2500, rep = 4, alpha = 10.0, zeta=0.00398406374501992
+Elapsed time = 211.273535859 seconds
+Time per step = 0.00211273535859 seconds
+n = 2500, rep = 5, alpha = 10.0, zeta=0.00398406374501992
+Elapsed time = 214.288709259 seconds
+Time per step = 0.00214288709259 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 10.0, zeta=0.001996007984031936
+Elapsed time = 420.760979378 seconds
+Time per step = 0.00420760979378 seconds
+n = 5000, rep = 2, alpha = 10.0, zeta=0.001996007984031936
+Elapsed time = 426.104370631 seconds
+Time per step = 0.00426104370631 seconds
+n = 5000, rep = 3, alpha = 10.0, zeta=0.001996007984031936
+Elapsed time = 426.013899164 seconds
+Time per step = 0.00426013899164 seconds
+n = 5000, rep = 4, alpha = 10.0, zeta=0.001996007984031936
+Elapsed time = 422.355378084 seconds
+Time per step = 0.00422355378084 seconds
+n = 5000, rep = 5, alpha = 10.0, zeta=0.001996007984031936
+Elapsed time = 433.001632161 seconds
+Time per step = 0.00433001632161 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 10.0, zeta=0.000999000999000999
+Elapsed time = 839.651203733 seconds
+Time per step = 0.00839651203733 seconds
+n = 10000, rep = 2, alpha = 10.0, zeta=0.000999000999000999
+Elapsed time = 855.324185474 seconds
+Time per step = 0.00855324185474 seconds
+n = 10000, rep = 3, alpha = 10.0, zeta=0.000999000999000999
+Elapsed time = 861.762574739 seconds
+Time per step = 0.008617625747390001 seconds
+n = 10000, rep = 4, alpha = 10.0, zeta=0.000999000999000999
+Elapsed time = 861.550159148 seconds
+Time per step = 0.00861550159148 seconds
+n = 10000, rep = 5, alpha = 10.0, zeta=0.000999000999000999
+Elapsed time = 852.773824138 seconds
+Time per step = 0.00852773824138 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10.0-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = 100.0, zeta=0.5
+Elapsed time = 13.133015265 seconds
+Time per step = 0.00013133015264999999 seconds
+n = 100, rep = 2, alpha = 100.0, zeta=0.5
+Elapsed time = 12.499513649 seconds
+Time per step = 0.00012499513649 seconds
+n = 100, rep = 3, alpha = 100.0, zeta=0.5
+Elapsed time = 12.345916419 seconds
+Time per step = 0.00012345916419 seconds
+n = 100, rep = 4, alpha = 100.0, zeta=0.5
+Elapsed time = 12.433410459 seconds
+Time per step = 0.00012433410459 seconds
+n = 100, rep = 5, alpha = 100.0, zeta=0.5
+Elapsed time = 12.615193236 seconds
+Time per step = 0.00012615193236 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 100.0, zeta=0.2857142857142857
+Elapsed time = 25.305390529 seconds
+Time per step = 0.00025305390529 seconds
+n = 250, rep = 2, alpha = 100.0, zeta=0.2857142857142857
+Elapsed time = 25.222745197 seconds
+Time per step = 0.00025222745197 seconds
+n = 250, rep = 3, alpha = 100.0, zeta=0.2857142857142857
+Elapsed time = 25.512240039 seconds
+Time per step = 0.00025512240039 seconds
+n = 250, rep = 4, alpha = 100.0, zeta=0.2857142857142857
+Elapsed time = 24.888563039 seconds
+Time per step = 0.00024888563039000003 seconds
+n = 250, rep = 5, alpha = 100.0, zeta=0.2857142857142857
+Elapsed time = 25.489420825 seconds
+Time per step = 0.00025489420825 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 100.0, zeta=0.16666666666666666
+Elapsed time = 45.330613779 seconds
+Time per step = 0.00045330613778999995 seconds
+n = 500, rep = 2, alpha = 100.0, zeta=0.16666666666666666
+Elapsed time = 46.850722663 seconds
+Time per step = 0.00046850722663 seconds
+n = 500, rep = 3, alpha = 100.0, zeta=0.16666666666666666
+Elapsed time = 46.878563899 seconds
+Time per step = 0.00046878563899 seconds
+n = 500, rep = 4, alpha = 100.0, zeta=0.16666666666666666
+Elapsed time = 47.059261679 seconds
+Time per step = 0.00047059261679 seconds
+n = 500, rep = 5, alpha = 100.0, zeta=0.16666666666666666
+Elapsed time = 43.862472024 seconds
+Time per step = 0.00043862472024 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 100.0, zeta=0.09090909090909091
+Elapsed time = 88.559462619 seconds
+Time per step = 0.00088559462619 seconds
+n = 1000, rep = 2, alpha = 100.0, zeta=0.09090909090909091
+Elapsed time = 89.428663952 seconds
+Time per step = 0.0008942866395199999 seconds
+n = 1000, rep = 3, alpha = 100.0, zeta=0.09090909090909091
+Elapsed time = 85.314685761 seconds
+Time per step = 0.0008531468576100001 seconds
+n = 1000, rep = 4, alpha = 100.0, zeta=0.09090909090909091
+Elapsed time = 87.662477094 seconds
+Time per step = 0.00087662477094 seconds
+n = 1000, rep = 5, alpha = 100.0, zeta=0.09090909090909091
+Elapsed time = 86.0877863 seconds
+Time per step = 0.000860877863 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 100.0, zeta=0.038461538461538464
+Elapsed time = 217.643836238 seconds
+Time per step = 0.00217643836238 seconds
+n = 2500, rep = 2, alpha = 100.0, zeta=0.038461538461538464
+Elapsed time = 217.224854489 seconds
+Time per step = 0.0021722485448899998 seconds
+n = 2500, rep = 3, alpha = 100.0, zeta=0.038461538461538464
+Elapsed time = 218.022889407 seconds
+Time per step = 0.00218022889407 seconds
+n = 2500, rep = 4, alpha = 100.0, zeta=0.038461538461538464
+Elapsed time = 218.382712301 seconds
+Time per step = 0.00218382712301 seconds
+n = 2500, rep = 5, alpha = 100.0, zeta=0.038461538461538464
+Elapsed time = 199.076586888 seconds
+Time per step = 0.00199076586888 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 100.0, zeta=0.0196078431372549
+Elapsed time = 390.391089834 seconds
+Time per step = 0.00390391089834 seconds
+n = 5000, rep = 2, alpha = 100.0, zeta=0.0196078431372549
+Elapsed time = 386.184549089 seconds
+Time per step = 0.0038618454908899997 seconds
+n = 5000, rep = 3, alpha = 100.0, zeta=0.0196078431372549
+Elapsed time = 384.497426746 seconds
+Time per step = 0.0038449742674599996 seconds
+n = 5000, rep = 4, alpha = 100.0, zeta=0.0196078431372549
+Elapsed time = 407.731758529 seconds
+Time per step = 0.00407731758529 seconds
+n = 5000, rep = 5, alpha = 100.0, zeta=0.0196078431372549
+Elapsed time = 393.93656305 seconds
+Time per step = 0.0039393656305000005 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 100.0, zeta=0.009900990099009901
+Elapsed time = 778.288032891 seconds
+Time per step = 0.00778288032891 seconds
+n = 10000, rep = 2, alpha = 100.0, zeta=0.009900990099009901
+Elapsed time = 788.98989755 seconds
+Time per step = 0.0078898989755 seconds
+n = 10000, rep = 3, alpha = 100.0, zeta=0.009900990099009901
+Elapsed time = 877.832119863 seconds
+Time per step = 0.00877832119863 seconds
+n = 10000, rep = 4, alpha = 100.0, zeta=0.009900990099009901
+Elapsed time = 922.763180209 seconds
+Time per step = 0.00922763180209 seconds
+n = 10000, rep = 5, alpha = 100.0, zeta=0.009900990099009901
+Elapsed time = 905.469440306 seconds
+Time per step = 0.00905469440306 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100.0-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = 1000.0, zeta=0.9090909090909092
+Elapsed time = 13.785147246 seconds
+Time per step = 0.00013785147246 seconds
+n = 100, rep = 2, alpha = 1000.0, zeta=0.9090909090909092
+Elapsed time = 12.406395354 seconds
+Time per step = 0.00012406395354000002 seconds
+n = 100, rep = 3, alpha = 1000.0, zeta=0.9090909090909092
+Elapsed time = 13.549657329 seconds
+Time per step = 0.00013549657329 seconds
+n = 100, rep = 4, alpha = 1000.0, zeta=0.9090909090909092
+Elapsed time = 13.780978507 seconds
+Time per step = 0.00013780978507 seconds
+n = 100, rep = 5, alpha = 1000.0, zeta=0.9090909090909092
+Elapsed time = 12.593272285 seconds
+Time per step = 0.00012593272285 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 1000.0, zeta=0.8
+Elapsed time = 26.06742016 seconds
+Time per step = 0.0002606742016 seconds
+n = 250, rep = 2, alpha = 1000.0, zeta=0.8
+Elapsed time = 25.168830392 seconds
+Time per step = 0.00025168830392 seconds
+n = 250, rep = 3, alpha = 1000.0, zeta=0.8
+Elapsed time = 27.247860687 seconds
+Time per step = 0.00027247860687 seconds
+n = 250, rep = 4, alpha = 1000.0, zeta=0.8
+Elapsed time = 25.880745463 seconds
+Time per step = 0.00025880745463 seconds
+n = 250, rep = 5, alpha = 1000.0, zeta=0.8
+Elapsed time = 27.267018986 seconds
+Time per step = 0.00027267018986 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 1000.0, zeta=0.6666666666666666
+Elapsed time = 46.211373015 seconds
+Time per step = 0.00046211373015 seconds
+n = 500, rep = 2, alpha = 1000.0, zeta=0.6666666666666666
+Elapsed time = 49.807453832 seconds
+Time per step = 0.0004980745383200001 seconds
+n = 500, rep = 3, alpha = 1000.0, zeta=0.6666666666666666
+Elapsed time = 49.769988251 seconds
+Time per step = 0.00049769988251 seconds
+n = 500, rep = 4, alpha = 1000.0, zeta=0.6666666666666666
+Elapsed time = 47.903523918 seconds
+Time per step = 0.00047903523917999997 seconds
+n = 500, rep = 5, alpha = 1000.0, zeta=0.6666666666666666
+Elapsed time = 51.420897204 seconds
+Time per step = 0.00051420897204 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 1000.0, zeta=0.5
+Elapsed time = 93.225187641 seconds
+Time per step = 0.0009322518764100001 seconds
+n = 1000, rep = 2, alpha = 1000.0, zeta=0.5
+Elapsed time = 96.087764008 seconds
+Time per step = 0.0009608776400799999 seconds
+n = 1000, rep = 3, alpha = 1000.0, zeta=0.5
+Elapsed time = 94.214067453 seconds
+Time per step = 0.00094214067453 seconds
+n = 1000, rep = 4, alpha = 1000.0, zeta=0.5
+Elapsed time = 97.945085683 seconds
+Time per step = 0.00097945085683 seconds
+n = 1000, rep = 5, alpha = 1000.0, zeta=0.5
+Elapsed time = 94.958701837 seconds
+Time per step = 0.0009495870183700001 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 1000.0, zeta=0.28571428571428575
+Elapsed time = 232.773167507 seconds
+Time per step = 0.0023277316750700003 seconds
+n = 2500, rep = 2, alpha = 1000.0, zeta=0.28571428571428575
+Elapsed time = 234.058683523 seconds
+Time per step = 0.00234058683523 seconds
+n = 2500, rep = 3, alpha = 1000.0, zeta=0.28571428571428575
+Elapsed time = 237.317121131 seconds
+Time per step = 0.0023731712113099998 seconds
+n = 2500, rep = 4, alpha = 1000.0, zeta=0.28571428571428575
+Elapsed time = 233.718251541 seconds
+Time per step = 0.00233718251541 seconds
+n = 2500, rep = 5, alpha = 1000.0, zeta=0.28571428571428575
+Elapsed time = 236.853637668 seconds
+Time per step = 0.00236853637668 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 1000.0, zeta=0.16666666666666666
+Elapsed time = 465.801314373 seconds
+Time per step = 0.00465801314373 seconds
+n = 5000, rep = 2, alpha = 1000.0, zeta=0.16666666666666666
+Elapsed time = 441.783478253 seconds
+Time per step = 0.00441783478253 seconds
+n = 5000, rep = 3, alpha = 1000.0, zeta=0.16666666666666666
+Elapsed time = 411.946430871 seconds
+Time per step = 0.00411946430871 seconds
+n = 5000, rep = 4, alpha = 1000.0, zeta=0.16666666666666666
+Elapsed time = 408.432628663 seconds
+Time per step = 0.00408432628663 seconds
+n = 5000, rep = 5, alpha = 1000.0, zeta=0.16666666666666666
+Elapsed time = 399.588162031 seconds
+Time per step = 0.00399588162031 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 1000.0, zeta=0.09090909090909091
+Elapsed time = 788.526354901 seconds
+Time per step = 0.00788526354901 seconds
+n = 10000, rep = 2, alpha = 1000.0, zeta=0.09090909090909091
+Elapsed time = 786.862138358 seconds
+Time per step = 0.00786862138358 seconds
+n = 10000, rep = 3, alpha = 1000.0, zeta=0.09090909090909091
+Elapsed time = 786.289882868 seconds
+Time per step = 0.00786289882868 seconds
+n = 10000, rep = 4, alpha = 1000.0, zeta=0.09090909090909091
+Elapsed time = 789.081652476 seconds
+Time per step = 0.007890816524760001 seconds
+n = 10000, rep = 5, alpha = 1000.0, zeta=0.09090909090909091
+Elapsed time = 792.839485041 seconds
+Time per step = 0.00792839485041 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1000.0-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = 10000.0, zeta=0.9900990099009902
+Elapsed time = 10.842433211 seconds
+Time per step = 0.00010842433211 seconds
+n = 100, rep = 2, alpha = 10000.0, zeta=0.9900990099009902
+Elapsed time = 11.092043325 seconds
+Time per step = 0.00011092043325 seconds
+n = 100, rep = 3, alpha = 10000.0, zeta=0.9900990099009902
+Elapsed time = 10.646264137 seconds
+Time per step = 0.00010646264137 seconds
+n = 100, rep = 4, alpha = 10000.0, zeta=0.9900990099009902
+Elapsed time = 9.728295683 seconds
+Time per step = 9.728295683e-5 seconds
+n = 100, rep = 5, alpha = 10000.0, zeta=0.9900990099009902
+Elapsed time = 9.670566057 seconds
+Time per step = 9.670566057e-5 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 10000.0, zeta=0.975609756097561
+Elapsed time = 23.735497513 seconds
+Time per step = 0.00023735497512999997 seconds
+n = 250, rep = 2, alpha = 10000.0, zeta=0.975609756097561
+Elapsed time = 21.672055137 seconds
+Time per step = 0.00021672055137 seconds
+n = 250, rep = 3, alpha = 10000.0, zeta=0.975609756097561
+Elapsed time = 22.980273168 seconds
+Time per step = 0.00022980273168 seconds
+n = 250, rep = 4, alpha = 10000.0, zeta=0.975609756097561
+Elapsed time = 21.328160785 seconds
+Time per step = 0.00021328160785000002 seconds
+n = 250, rep = 5, alpha = 10000.0, zeta=0.975609756097561
+Elapsed time = 20.569934785 seconds
+Time per step = 0.00020569934785000002 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 10000.0, zeta=0.9523809523809524
+Elapsed time = 43.591032905 seconds
+Time per step = 0.00043591032905 seconds
+n = 500, rep = 2, alpha = 10000.0, zeta=0.9523809523809524
+Elapsed time = 42.331109044 seconds
+Time per step = 0.00042331109044 seconds
+n = 500, rep = 3, alpha = 10000.0, zeta=0.9523809523809524
+Elapsed time = 44.478723976 seconds
+Time per step = 0.00044478723976 seconds
+n = 500, rep = 4, alpha = 10000.0, zeta=0.9523809523809524
+Elapsed time = 39.245071343 seconds
+Time per step = 0.00039245071343 seconds
+n = 500, rep = 5, alpha = 10000.0, zeta=0.9523809523809524
+Elapsed time = 39.753919205 seconds
+Time per step = 0.00039753919205 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 10000.0, zeta=0.9090909090909091
+Elapsed time = 77.47971968 seconds
+Time per step = 0.0007747971968 seconds
+n = 1000, rep = 2, alpha = 10000.0, zeta=0.9090909090909091
+Elapsed time = 76.706531951 seconds
+Time per step = 0.00076706531951 seconds
+n = 1000, rep = 3, alpha = 10000.0, zeta=0.9090909090909091
+Elapsed time = 80.681196188 seconds
+Time per step = 0.00080681196188 seconds
+n = 1000, rep = 4, alpha = 10000.0, zeta=0.9090909090909091
+Elapsed time = 77.219088449 seconds
+Time per step = 0.00077219088449 seconds
+n = 1000, rep = 5, alpha = 10000.0, zeta=0.9090909090909091
+Elapsed time = 79.435314311 seconds
+Time per step = 0.00079435314311 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 10000.0, zeta=0.8
+Elapsed time = 198.19764677 seconds
+Time per step = 0.0019819764677 seconds
+n = 2500, rep = 2, alpha = 10000.0, zeta=0.8
+Elapsed time = 190.595777099 seconds
+Time per step = 0.00190595777099 seconds
+n = 2500, rep = 3, alpha = 10000.0, zeta=0.8
+Elapsed time = 202.620540521 seconds
+Time per step = 0.00202620540521 seconds
+n = 2500, rep = 4, alpha = 10000.0, zeta=0.8
+Elapsed time = 202.903227105 seconds
+Time per step = 0.00202903227105 seconds
+n = 2500, rep = 5, alpha = 10000.0, zeta=0.8
+Elapsed time = 198.325333356 seconds
+Time per step = 0.00198325333356 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 10000.0, zeta=0.6666666666666666
+Elapsed time = 399.781077268 seconds
+Time per step = 0.00399781077268 seconds
+n = 5000, rep = 2, alpha = 10000.0, zeta=0.6666666666666666
+Elapsed time = 387.736538974 seconds
+Time per step = 0.0038773653897399996 seconds
+n = 5000, rep = 3, alpha = 10000.0, zeta=0.6666666666666666
+Elapsed time = 405.64097298 seconds
+Time per step = 0.0040564097298 seconds
+n = 5000, rep = 4, alpha = 10000.0, zeta=0.6666666666666666
+Elapsed time = 403.5704803 seconds
+Time per step = 0.004035704803 seconds
+n = 5000, rep = 5, alpha = 10000.0, zeta=0.6666666666666666
+Elapsed time = 419.014583107 seconds
+Time per step = 0.00419014583107 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 10000.0, zeta=0.5
+Elapsed time = 803.192648133 seconds
+Time per step = 0.00803192648133 seconds
+n = 10000, rep = 2, alpha = 10000.0, zeta=0.5
+Elapsed time = 790.73965929 seconds
+Time per step = 0.0079073965929 seconds
+n = 10000, rep = 3, alpha = 10000.0, zeta=0.5
+Elapsed time = 814.503739754 seconds
+Time per step = 0.00814503739754 seconds
+n = 10000, rep = 4, alpha = 10000.0, zeta=0.5
+Elapsed time = 785.705112312 seconds
+Time per step = 0.00785705112312 seconds
+n = 10000, rep = 5, alpha = 10000.0, zeta=0.5
+Elapsed time = 800.025524496 seconds
+Time per step = 0.00800025524496 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=10000.0-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = 100000.0, zeta=0.999000999000999
+Elapsed time = 9.415082378 seconds
+Time per step = 9.415082378e-5 seconds
+n = 100, rep = 2, alpha = 100000.0, zeta=0.999000999000999
+Elapsed time = 10.384532673 seconds
+Time per step = 0.00010384532673000001 seconds
+n = 100, rep = 3, alpha = 100000.0, zeta=0.999000999000999
+Elapsed time = 9.753416168 seconds
+Time per step = 9.753416167999999e-5 seconds
+n = 100, rep = 4, alpha = 100000.0, zeta=0.999000999000999
+Elapsed time = 10.831240289 seconds
+Time per step = 0.00010831240289 seconds
+n = 100, rep = 5, alpha = 100000.0, zeta=0.999000999000999
+Elapsed time = 11.267274969 seconds
+Time per step = 0.00011267274969 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 100000.0, zeta=0.9975062344139652
+Elapsed time = 20.8719108 seconds
+Time per step = 0.00020871910799999998 seconds
+n = 250, rep = 2, alpha = 100000.0, zeta=0.9975062344139652
+Elapsed time = 23.318039771 seconds
+Time per step = 0.00023318039770999998 seconds
+n = 250, rep = 3, alpha = 100000.0, zeta=0.9975062344139652
+Elapsed time = 20.707274695 seconds
+Time per step = 0.00020707274695 seconds
+n = 250, rep = 4, alpha = 100000.0, zeta=0.9975062344139652
+Elapsed time = 24.010089962 seconds
+Time per step = 0.00024010089961999998 seconds
+n = 250, rep = 5, alpha = 100000.0, zeta=0.9975062344139652
+Elapsed time = 20.728210339 seconds
+Time per step = 0.00020728210339 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 100000.0, zeta=0.9950248756218906
+Elapsed time = 38.967500062 seconds
+Time per step = 0.00038967500062 seconds
+n = 500, rep = 2, alpha = 100000.0, zeta=0.9950248756218906
+Elapsed time = 38.95404903 seconds
+Time per step = 0.0003895404903 seconds
+n = 500, rep = 3, alpha = 100000.0, zeta=0.9950248756218906
+Elapsed time = 42.93436073 seconds
+Time per step = 0.0004293436073 seconds
+n = 500, rep = 4, alpha = 100000.0, zeta=0.9950248756218906
+Elapsed time = 39.828783542 seconds
+Time per step = 0.00039828783542 seconds
+n = 500, rep = 5, alpha = 100000.0, zeta=0.9950248756218906
+Elapsed time = 37.172397247 seconds
+Time per step = 0.00037172397247 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 100000.0, zeta=0.9900990099009901
+Elapsed time = 84.065183386 seconds
+Time per step = 0.00084065183386 seconds
+n = 1000, rep = 2, alpha = 100000.0, zeta=0.9900990099009901
+Elapsed time = 86.442529474 seconds
+Time per step = 0.0008644252947399999 seconds
+n = 1000, rep = 3, alpha = 100000.0, zeta=0.9900990099009901
+Elapsed time = 85.073011014 seconds
+Time per step = 0.00085073011014 seconds
+n = 1000, rep = 4, alpha = 100000.0, zeta=0.9900990099009901
+Elapsed time = 82.499925327 seconds
+Time per step = 0.00082499925327 seconds
+n = 1000, rep = 5, alpha = 100000.0, zeta=0.9900990099009901
+Elapsed time = 88.327393971 seconds
+Time per step = 0.0008832739397100001 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 100000.0, zeta=0.975609756097561
+Elapsed time = 203.179619159 seconds
+Time per step = 0.00203179619159 seconds
+n = 2500, rep = 2, alpha = 100000.0, zeta=0.975609756097561
+Elapsed time = 194.925582525 seconds
+Time per step = 0.00194925582525 seconds
+n = 2500, rep = 3, alpha = 100000.0, zeta=0.975609756097561
+Elapsed time = 202.813107318 seconds
+Time per step = 0.00202813107318 seconds
+n = 2500, rep = 4, alpha = 100000.0, zeta=0.975609756097561
+Elapsed time = 205.905803445 seconds
+Time per step = 0.00205905803445 seconds
+n = 2500, rep = 5, alpha = 100000.0, zeta=0.975609756097561
+Elapsed time = 192.918706916 seconds
+Time per step = 0.00192918706916 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 100000.0, zeta=0.9523809523809524
+Elapsed time = 398.819689421 seconds
+Time per step = 0.003988196894210001 seconds
+n = 5000, rep = 2, alpha = 100000.0, zeta=0.9523809523809524
+Elapsed time = 406.303373326 seconds
+Time per step = 0.00406303373326 seconds
+n = 5000, rep = 3, alpha = 100000.0, zeta=0.9523809523809524
+Elapsed time = 403.883021634 seconds
+Time per step = 0.00403883021634 seconds
+n = 5000, rep = 4, alpha = 100000.0, zeta=0.9523809523809524
+Elapsed time = 404.889575453 seconds
+Time per step = 0.00404889575453 seconds
+n = 5000, rep = 5, alpha = 100000.0, zeta=0.9523809523809524
+Elapsed time = 445.327762765 seconds
+Time per step = 0.00445327762765 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 100000.0, zeta=0.9090909090909091
+Elapsed time = 859.580975333 seconds
+Time per step = 0.00859580975333 seconds
+n = 10000, rep = 2, alpha = 100000.0, zeta=0.9090909090909091
+Elapsed time = 881.992756362 seconds
+Time per step = 0.00881992756362 seconds
+n = 10000, rep = 3, alpha = 100000.0, zeta=0.9090909090909091
+Elapsed time = 763.243490808 seconds
+Time per step = 0.0076324349080800005 seconds
+n = 10000, rep = 4, alpha = 100000.0, zeta=0.9090909090909091
+Elapsed time = 778.635940631 seconds
+Time per step = 0.00778635940631 seconds
+n = 10000, rep = 5, alpha = 100000.0, zeta=0.9090909090909091
+Elapsed time = 876.151598915 seconds
+Time per step = 0.00876151598915 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=100000.0-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = 1.0e6, zeta=0.9999000099990002
+Elapsed time = 12.802022536 seconds
+Time per step = 0.00012802022536000001 seconds
+n = 100, rep = 2, alpha = 1.0e6, zeta=0.9999000099990002
+Elapsed time = 11.741970155 seconds
+Time per step = 0.00011741970155 seconds
+n = 100, rep = 3, alpha = 1.0e6, zeta=0.9999000099990002
+Elapsed time = 12.466489258 seconds
+Time per step = 0.00012466489257999998 seconds
+n = 100, rep = 4, alpha = 1.0e6, zeta=0.9999000099990002
+Elapsed time = 12.248725257 seconds
+Time per step = 0.00012248725257 seconds
+n = 100, rep = 5, alpha = 1.0e6, zeta=0.9999000099990002
+Elapsed time = 12.509338838 seconds
+Time per step = 0.00012509338837999998 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = 1.0e6, zeta=0.9997500624843789
+Elapsed time = 25.501129448 seconds
+Time per step = 0.00025501129448 seconds
+n = 250, rep = 2, alpha = 1.0e6, zeta=0.9997500624843789
+Elapsed time = 25.429645246 seconds
+Time per step = 0.00025429645246 seconds
+n = 250, rep = 3, alpha = 1.0e6, zeta=0.9997500624843789
+Elapsed time = 24.546733856 seconds
+Time per step = 0.00024546733856 seconds
+n = 250, rep = 4, alpha = 1.0e6, zeta=0.9997500624843789
+Elapsed time = 25.357234896 seconds
+Time per step = 0.00025357234896000003 seconds
+n = 250, rep = 5, alpha = 1.0e6, zeta=0.9997500624843789
+Elapsed time = 27.11322051 seconds
+Time per step = 0.0002711322051 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = 1.0e6, zeta=0.9995002498750624
+Elapsed time = 48.257992745 seconds
+Time per step = 0.00048257992745 seconds
+n = 500, rep = 2, alpha = 1.0e6, zeta=0.9995002498750624
+Elapsed time = 47.562140819 seconds
+Time per step = 0.00047562140819 seconds
+n = 500, rep = 3, alpha = 1.0e6, zeta=0.9995002498750624
+Elapsed time = 47.501128733 seconds
+Time per step = 0.00047501128733 seconds
+n = 500, rep = 4, alpha = 1.0e6, zeta=0.9995002498750624
+Elapsed time = 48.04193986 seconds
+Time per step = 0.0004804193986 seconds
+n = 500, rep = 5, alpha = 1.0e6, zeta=0.9995002498750624
+Elapsed time = 47.534970948 seconds
+Time per step = 0.00047534970948 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = 1.0e6, zeta=0.999000999000999
+Elapsed time = 98.221533326 seconds
+Time per step = 0.00098221533326 seconds
+n = 1000, rep = 2, alpha = 1.0e6, zeta=0.999000999000999
+Elapsed time = 96.572321723 seconds
+Time per step = 0.00096572321723 seconds
+n = 1000, rep = 3, alpha = 1.0e6, zeta=0.999000999000999
+Elapsed time = 98.518660847 seconds
+Time per step = 0.0009851866084700002 seconds
+n = 1000, rep = 4, alpha = 1.0e6, zeta=0.999000999000999
+Elapsed time = 95.931399598 seconds
+Time per step = 0.00095931399598 seconds
+n = 1000, rep = 5, alpha = 1.0e6, zeta=0.999000999000999
+Elapsed time = 96.962368451 seconds
+Time per step = 0.0009696236845100001 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = 1.0e6, zeta=0.997506234413965
+Elapsed time = 231.842898045 seconds
+Time per step = 0.00231842898045 seconds
+n = 2500, rep = 2, alpha = 1.0e6, zeta=0.997506234413965
+Elapsed time = 219.292332964 seconds
+Time per step = 0.00219292332964 seconds
+n = 2500, rep = 3, alpha = 1.0e6, zeta=0.997506234413965
+Elapsed time = 272.658739928 seconds
+Time per step = 0.00272658739928 seconds
+n = 2500, rep = 4, alpha = 1.0e6, zeta=0.997506234413965
+Elapsed time = 232.605548883 seconds
+Time per step = 0.00232605548883 seconds
+n = 2500, rep = 5, alpha = 1.0e6, zeta=0.997506234413965
+Elapsed time = 234.065649325 seconds
+Time per step = 0.0023406564932500003 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = 1.0e6, zeta=0.9950248756218906
+Elapsed time = 443.72520596 seconds
+Time per step = 0.0044372520595999995 seconds
+n = 5000, rep = 2, alpha = 1.0e6, zeta=0.9950248756218906
+Elapsed time = 453.920461285 seconds
+Time per step = 0.00453920461285 seconds
+n = 5000, rep = 3, alpha = 1.0e6, zeta=0.9950248756218906
+Elapsed time = 462.707784363 seconds
+Time per step = 0.0046270778436299995 seconds
+n = 5000, rep = 4, alpha = 1.0e6, zeta=0.9950248756218906
+Elapsed time = 461.970293568 seconds
+Time per step = 0.0046197029356799995 seconds
+n = 5000, rep = 5, alpha = 1.0e6, zeta=0.9950248756218906
+Elapsed time = 466.637428237 seconds
+Time per step = 0.00466637428237 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = 1.0e6, zeta=0.9900990099009901
+Elapsed time = 915.243600727 seconds
+Time per step = 0.009152436007269999 seconds
+n = 10000, rep = 2, alpha = 1.0e6, zeta=0.9900990099009901
+Elapsed time = 920.01251581 seconds
+Time per step = 0.0092001251581 seconds
+n = 10000, rep = 3, alpha = 1.0e6, zeta=0.9900990099009901
+Elapsed time = 890.190627191 seconds
+Time per step = 0.008901906271909999 seconds
+n = 10000, rep = 4, alpha = 1.0e6, zeta=0.9900990099009901
+Elapsed time = 909.482276696 seconds
+Time per step = 0.00909482276696 seconds
+n = 10000, rep = 5, alpha = 1.0e6, zeta=0.9900990099009901
+Elapsed time = 891.709779582 seconds
+Time per step = 0.00891709779582 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=1.0e6-n=10000-skew_norm_mixtures.jld
+
+n = 100, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 11.399659812 seconds
+Time per step = 0.00011399659811999999 seconds
+n = 100, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 12.434099404 seconds
+Time per step = 0.00012434099404 seconds
+n = 100, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 11.146520958 seconds
+Time per step = 0.00011146520958 seconds
+n = 100, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 11.209304185 seconds
+Time per step = 0.00011209304185 seconds
+n = 100, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 12.316984844 seconds
+Time per step = 0.00012316984844 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=100-skew_norm_mixtures.jld
+
+n = 250, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 25.778977548 seconds
+Time per step = 0.00025778977548 seconds
+n = 250, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 24.807575655 seconds
+Time per step = 0.00024807575655 seconds
+n = 250, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 24.978466173 seconds
+Time per step = 0.00024978466173 seconds
+n = 250, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 23.692637625 seconds
+Time per step = 0.00023692637625 seconds
+n = 250, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 24.758037015 seconds
+Time per step = 0.00024758037015 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=250-skew_norm_mixtures.jld
+
+n = 500, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 45.746561674 seconds
+Time per step = 0.00045746561674 seconds
+n = 500, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 45.380735592 seconds
+Time per step = 0.00045380735592 seconds
+n = 500, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 45.210318934 seconds
+Time per step = 0.00045210318934 seconds
+n = 500, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 45.699048535 seconds
+Time per step = 0.00045699048535000005 seconds
+n = 500, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 46.47482104 seconds
+Time per step = 0.0004647482104 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=500-skew_norm_mixtures.jld
+
+n = 1000, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 88.523752092 seconds
+Time per step = 0.0008852375209199999 seconds
+n = 1000, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 88.352892056 seconds
+Time per step = 0.00088352892056 seconds
+n = 1000, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 89.647496431 seconds
+Time per step = 0.00089647496431 seconds
+n = 1000, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 90.274872892 seconds
+Time per step = 0.0009027487289200001 seconds
+n = 1000, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 90.111060014 seconds
+Time per step = 0.0009011106001400001 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=1000-skew_norm_mixtures.jld
+
+n = 2500, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 222.783905935 seconds
+Time per step = 0.00222783905935 seconds
+n = 2500, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 218.646654123 seconds
+Time per step = 0.00218646654123 seconds
+n = 2500, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 226.41596414 seconds
+Time per step = 0.0022641596414 seconds
+n = 2500, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 224.972850746 seconds
+Time per step = 0.00224972850746 seconds
+n = 2500, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 222.248947843 seconds
+Time per step = 0.00222248947843 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=2500-skew_norm_mixtures.jld
+
+n = 5000, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 444.908663489 seconds
+Time per step = 0.00444908663489 seconds
+n = 5000, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 442.084613488 seconds
+Time per step = 0.00442084613488 seconds
+n = 5000, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 443.593439196 seconds
+Time per step = 0.00443593439196 seconds
+n = 5000, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 441.962303089 seconds
+Time per step = 0.00441962303089 seconds
+n = 5000, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 442.657252361 seconds
+Time per step = 0.00442657252361 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=5000-skew_norm_mixtures.jld
+
+n = 10000, rep = 1, alpha = Inf, zeta=1.0
+Elapsed time = 859.069600306 seconds
+Time per step = 0.00859069600306 seconds
+n = 10000, rep = 2, alpha = Inf, zeta=1.0
+Elapsed time = 872.456295312 seconds
+Time per step = 0.00872456295312 seconds
+n = 10000, rep = 3, alpha = Inf, zeta=1.0
+Elapsed time = 839.162268852 seconds
+Time per step = 0.00839162268852 seconds
+n = 10000, rep = 4, alpha = Inf, zeta=1.0
+Elapsed time = 869.188445529 seconds
+Time per step = 0.00869188445529 seconds
+n = 10000, rep = 5, alpha = Inf, zeta=1.0
+Elapsed time = 910.617834402 seconds
+Time per step = 0.00910617834402 seconds
+Saved to ./comp_outputs/k_posteriors-alpha=Inf-n=10000-skew_norm_mixtures.jld
+
+Main.Simulation
