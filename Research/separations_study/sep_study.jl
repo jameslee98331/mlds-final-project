@@ -64,13 +64,13 @@ for (i_n, n) in enumerate(ns)
         end
 
         save(
-            "./comp_outputs/t_posteriors-mvn-dpm-sep=$sep-n=$n.jld",
+            "./comp_outputs/t_posteriors-mvn-dpm-sep=$sep-n=$n-gaussian_mixtures.jld",
             "t_posteriors",
             t_posteriors
         )
 
         save(
-            "./comp_outputs/k_posteriors-mvn-mfm-sep=$sep-n=$n.jld",
+            "./comp_outputs/k_posteriors-mvn-mfm-sep=$sep-n=$n-gaussian_mixtures.jld",
             "k_posteriors",
             k_posteriors
         )
