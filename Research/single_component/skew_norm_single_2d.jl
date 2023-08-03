@@ -4,9 +4,9 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000]
+ns = [100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000]::Array{Int}
 n_sets = 50
-sets = 1:n_sets::Array{Int}
+sets = 1:n_sets
 alphas = [0, 1, 2, 5, 7]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
@@ -27,13 +27,14 @@ end
 # iterate over sets
 @sync @distributed for set in sets
 
-    all_data = h5read(
-        "./data_inputs/single_skew_normal_alpha=1_2d_set-$set.jld",
-        "data"
-    )
+    for alpha in alphas
 
-    for n in ns
-        for alpha in alphas
+        all_data = h5read(
+            "./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha=$alpha-set-$set.jld",
+            "data"
+        )
+
+        for n in ns
 
             # create dataset with 1 single component
             data = [all_data[j, :]::Array{Float64} for j in 1:n]
@@ -49,13 +50,13 @@ end
 
             # what results to store
             save(
-                "./comp_outputs/k_posterior_single_skew_normal_2d-n=$n-alpha=$alpha-set-$set.jld",
+                "./comp_outputs/skew_norm/2d/k_posterior_single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
                 "k_posterior",
                 k_posterior
             )
 
             save(
-                "./comp_outputs/t_posterior_single_skew_normal_2d-n=$n-alpha=$alpha-set-$set.jld",
+                "./comp_outputs/skew_norm/2d/t_posterior_single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
                 "t_posterior",
                 t_posterior
             )
