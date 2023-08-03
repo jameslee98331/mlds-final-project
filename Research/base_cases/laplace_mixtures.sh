@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -N laplace_mixtures
-#PBS -m e
+#PBS -m be
 #PBS -q large256
 
 cd /home/ma/w/wkl16/coding/mlds-final-project/Research/base_cases

@@ -8,16 +8,17 @@ using Random
 # options
 mcmc_its = 100000 # total number of MCMC sweeps to run
 mcmc_burn = Int(mcmc_its / 10) # number of burn-in iterations
-t_max = 100
+t_max = 127
 
-ns = [100, 250, 500, 1000, 2500, 5000, 10000]
+ns = [250, 500, 1000, 2500, 5000, 10000]
 n_reps = 5
-seps = 1:0.1:5
+seps = 1:0.5:5
 n_seps = length(seps)
 
 for (i_n, n) in enumerate(ns)
     for (i_sep, sep) in enumerate(seps)
-
+        
+        # Read data
         all_data = h5read("./data_inputs/gaussian_data-sep=$sep.jld", "gaussian_data")
         dt = fit(ZScoreTransform, all_data, dims=1)
         standardised_data = StatsBase.transform(dt, all_data)

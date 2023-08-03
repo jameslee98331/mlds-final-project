@@ -8,7 +8,7 @@ mcmc_its = 10^5 # total number of MCMC sweeps to run
 mcmc_burn = Int(mcmc_its / 10) # number of burn-in iterations
 t_max = 100
 
-ns = [100, 250, 500, 1000, 2500, 5000, 10000]
+ns = [5000, 10000]
 n_reps = 5  # number of times to run the simulation
 
 all_data = h5read("./data_inputs/gaussian_data.jld", "gaussian_data")

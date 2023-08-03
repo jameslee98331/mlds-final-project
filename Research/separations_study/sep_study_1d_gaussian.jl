@@ -8,7 +8,7 @@ mcmc_its = 100000 # total number of MCMC sweeps to run
 mcmc_burn = Int(mcmc_its / 10) # number of burn-in iterations
 t_max = 100
 
-ns = [100, 250, 500, 1000, 2500, 5000, 10000]
+ns = [10000]
 n_reps = 5
 seps = 1:0.5:5
 n_seps = length(seps)
@@ -48,6 +48,9 @@ for (i_n, n) in enumerate(ns)
             println("n = $n, sep = $sep, rep=$rep")
             dpm_result = BayesianMixtures.run_sampler(dpm_options)
             mfm_result = BayesianMixtures.run_sampler(mfm_options) # Results of Miller and Harrison (2018)
+
+            # BayesianMixtures.save_result("./comp_outputs/raw_results/dpm_result-gaussian-r$rep-n$n-s$sep.jld", dpm_result)
+            # BayesianMixtures.save_result("./comp_outputs/raw_results/mfm_result-gaussian-r$rep-n$n-s$sep.jld", mfm_result)
 
             # Get the posterior on k (number of components) 
             t_posterior = BayesianMixtures.t_posterior(dpm_result)

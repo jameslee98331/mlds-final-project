@@ -8,3 +8,8 @@
 # R
 .Rhistory
 .RData
+
+# Compute Cluster output files
+*.out
+*.e*
+*.o*
