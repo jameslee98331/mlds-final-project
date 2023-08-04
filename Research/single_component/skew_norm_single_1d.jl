@@ -5,8 +5,9 @@ addprocs(10)
 @everywhere using JLD
 
 ns = [100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000]::Array{Int}
-n_sets = 50
-sets = 1:n_sets
+# n_sets = 50
+# sets = 1:n_sets
+sets = [2, 3, 4, 5, 7, 8, 9, 10, 12, 13]
 alphas = [0, 1, 2, 5, 7]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
@@ -50,13 +51,13 @@ end
 
             # what results to store
             save(
-                "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-n=$n-alpha=$alpha-set-$set.jld",
+                "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=$alpha-n=$n-set-$set.jld",
                 "k_posterior",
                 k_posterior
             )
 
             save(
-                "./comp_outputs/skew_norm/1d/t_posterior-single_skew_normal_1d-n=$n-alpha=$alpha-set-$set.jld",
+                "./comp_outputs/skew_norm/1d/t_posterior-single_skew_normal_1d-alpha=$alpha-n=$n-set-$set.jld",
                 "t_posterior",
                 t_posterior
             )
