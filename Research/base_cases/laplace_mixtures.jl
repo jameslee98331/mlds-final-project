@@ -24,7 +24,7 @@ for (i_n, n) in enumerate(ns)
         # shuflle dataset and extract a subset of length n
         shuffled_data = shuffle(all_data)
         data = [shuffled_data[j, :]::Array{Float64} for j in 1:n]
-        
+
         save(
             "./data_inputs/raw-data-n=$n-$data_name.jld",
             "data",

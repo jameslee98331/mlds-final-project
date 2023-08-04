@@ -1,7 +1,7 @@
 # Map-MCMC for mixtures.
 
 # This code assumes the following functions have been defined:
-#   likelihood(x[j],theta)
+#   likelihood(x[j], theta)
 #   log_v_prior(v)
 #   log_theta_prior(theta)
 #   theta_prop(theta)
@@ -19,6 +19,7 @@ function sampler(x, n_samples, m, c, sigma, zeta)
     n = length(x)
 
     # initialize state
+    # weight map
     v = zeros(m)
     v[1] = 2 * c
     v[2:end] .= c / 2 # latent weights
@@ -28,9 +29,15 @@ function sampler(x, n_samples, m, c, sigma, zeta)
 
     # initialize vars for computing likelihood
     L = [likelihood(x[j], theta[i]) for i = 1:m, j = 1:n]
-    M = vec(q' * L)  # mixture density with unnormalized weights
-    ll = sum(log.(M)) - n * log(s)  # log-lik
-    Mp = zeros(n)  # Mp and Lp will hold proposed values
+
+    # mixture density with unnormalized weights
+    M = vec(q' * L)
+
+    # log-lik
+    ll = sum(log.(M)) - n * log(s)
+
+    # Mp and Lp will hold proposed values
+    Mp = zeros(n)
     Lp = zeros(n)
 
     # record-keeping

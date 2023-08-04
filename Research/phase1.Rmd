@@ -41,84 +41,6 @@ library(GBClust)
 library(mcclust)
 ```
 
-# GBClust Example
-```{r}
-d <- 2 # Dimension of the data
-H <- 2 # Number of clusters
-n <- 2000 # Sample size
-
-# Parameters
-sigma2 <- 1 # Variance
-G0 <- rep(1:H, each = n / H) # True clusters
-mu <- matrix(c(-1.2, 1.2, -1.2, 1.2), 2, 2) # Mean parameters
-
-# Simulation of the dataset
-set.seed(1234)
-dataset <- NULL
-for (h in 1:H) {
-  dataset <- rbind(
-    dataset,
-    rmvnorm(n = n / H, mean = mu[h, ], sigma = sigma2 * diag(d))
-  )
-}
-
-# K-means algorithm
-fit <- kmeans2(dataset, k = H, nstart = 10)
-
-# K-means Gibbs-sampling
-fit_gibbs <- kmeans_gibbs(
-  dataset,
-  k = H,
-  a_lambda = 0,
-  b_lambda = 0,
-  R = 10000,
-  burn_in = 1000,
-  trace = TRUE
-)
-
-Miscl <- function(S, cluster, medoids) {
-  pr_miscl <- numeric(nrow(S))
-  for (i in 1:n) {
-    Gi <- cluster[i]
-    pr_miscl[i] <- 1 - S[i, medoids[cluster[i]]]
-  }
-  pr_miscl
-}
-
-SGibbs <- mcclust::comp.psm(fit_gibbs$G)
-
-D <- as.matrix(dist(dataset, method = "euclidean"))^2 # Dissimilarity matrix
-MisclGibbs_pr <- Miscl(SGibbs, fit$cluster, comp_medoids(D, fit$cluster))
-
-p1 <- ggplot(
-  data = data.frame(dataset, Cluster = as.factor(fit$cluster)),
-  aes(x = X1, y = X2, col = Cluster, shape = Cluster)
-) +
-  geom_point(size = 2) +
-  theme_light() +
-  xlab("") +
-  ylab("") +
-  scale_color_brewer(palette = "Set1") +
-  ggtitle("K-means clustering")
-
-p1
-ggsave("./tutorial/plot1_1.png", width = 8.8, height = 4.4)
-
-# Misclassification probabilities
-data_plot <- rbind(data.frame(dataset, Probability = MisclGibbs_pr))
-p2 <- ggplot(data = data_plot, aes(x = X1, y = X2, col = Probability)) +
-  geom_point(size = 2) +
-  theme_light() +
-  xlab("") +
-  ylab("") +
-  scale_color_distiller(
-    palette = "Spectral", direction = -1, limits = c(0, .75)
-  ) +
-  ggtitle("Misclassification probabilities")
-p2
-ggsave("./tutorial/plot1_2.png", width = 8.8, height = 4.4)
-```
-
 Distnace varying datasets
 ```{r}
 N <- 10000
@@ -348,6 +270,8 @@ $$
 \mu_1 = (X, Y) \sim \mathcal{U}_2(0, 1) \\
 \mu_2 = (X + r\cos(\theta), Y + r\sin(\theta)), \quad \theta \sim \mathcal{U}(0, 2\pi) \\
 $$
+
+
 ```{r}
 set.seed(0)
 

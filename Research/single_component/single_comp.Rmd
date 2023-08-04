@@ -86,7 +86,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename =  glue("./comp_outputs/skew_norm/k_posterior_single_skew_normal_alpha=5_2d_n={n}-set-{set}.jld")
+    filename =  glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=5-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -151,7 +151,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/k_posterior_single_skew_normal_alpha=2_2d_n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=2-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -195,7 +195,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/k_posterior_single_skew_normal_alpha=7_2d_n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=7-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -236,7 +236,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/k_posterior_single_skew_normal_alpha=0_2d_n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=0-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -278,7 +278,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/k_posterior_single_skew_normal_alpha=1_2d_n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=1-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -319,24 +319,63 @@ data = as.data.frame(rbind(
 data %>% ggplot() + geom_point(aes(x=V1, y=avg_map_k_0, color=V3))
 ```
 
+
+
+
+```{r}
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+alphas = c(0, 1, 2, 5, 7)
+sets = 1:50
+
+for (alpha in alphas) {
+  for (n in ns) {
+    for (set in sets) {
+      from_name = glue("./comp_outputs/skew_norm/2d/k_posterior_single_skew_normal_alpha={alpha}_2d_n={n}-set-{set}.jld")
+      to_name = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha={alpha}-n={n}-set-{set}.jld")
+      file.rename(from_name, to_name)
+    }
+  }
+}
+```
+
+
+
 # Single Laplace component
 ```{r}
 # TODO: These should not be fixed
 sigma =  matrix(c(1, 0, 0, 1), nrow=2, ncol=2)
 mu = c(0, 0)
 n = 10000
+
 for (set in 1:50) {
   data = rmvl(n = n, mu=mu, Sigma = sigma)
   save_name = glue("./data_inputs/laplace/2d/single_laplace_2d-sigma=1-set-{set}.jld")
   h5save(data, file = save_name, name = "data")
 }
-```
 
-```{r}
-df = as.data.frame(h5read("./data_inputs/single_laplace_2d_set-8.jld", "data"))
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=1-set-8.jld", "data"))
 # df = rbind(data1, data2)
 df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
 ```
+
+```{r}
+# TODO: These should not be fixed
+sigma =  matrix(c(150, 2, 2, 150), nrow=2, ncol=2)
+mu = c(0, 0)
+n = 10000
+
+for (set in 1:50) {
+  data = rmvl(n = n, mu=mu, Sigma = sigma)
+  save_name = glue("./data_inputs/laplace/2d/single_laplace_2d-sigma=5-set-{set}.jld")
+  # h5save(data, file = save_name, name = "data")
+}
+
+# df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=5-set-8.jld", "data"))
+df = as.data.frame(data)
+df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+
+```
+
 
 ```{r}
 sets = 1:50

@@ -2,6 +2,7 @@ using BayesianMixtures
 using HDF5
 using JLD
 using Random
+using StatsBase
 
 # options
 mcmc_its = 10^5 # total number of MCMC sweeps to run
@@ -12,6 +13,9 @@ ns = [5000, 10000]
 n_reps = 5  # number of times to run the simulation
 
 all_data = h5read("./data_inputs/gaussian_data.jld", "gaussian_data")
+dt = fit(ZScoreTransform, all_data, dims=1)
+standardised_data = StatsBase.transform(dt, all_data)
+
 data_name = "gaussian_mixtures"
 
 for (i_n, n) in enumerate(ns)
@@ -24,9 +28,8 @@ for (i_n, n) in enumerate(ns)
         Random.seed!(n + rep) # Reset RNG
 
         # shuflle dataset and extract a subset of length n
-        shuffled_data = shuffle(all_data)
+        shuffled_data = shuffle(standardised_data)
         data = [shuffled_data[j, :]::Array{Float64} for j in 1:n]
-
         save(
             "./data_inputs/raw-data-n=$n-$data_name.jld",
             "data",

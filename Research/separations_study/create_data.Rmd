@@ -75,37 +75,47 @@ for (sep in seps) {
   p1 = plot_generated_data(gaussian_df, "Gaussian")
   print(p1)
   
-  sep_string = format(round(sep, 2), nsmall = 2)
-  save_name = glue("./data_inputs/gaussian_data-sep={sep_string}.jld")
-  h5save(gaussian_data, file = save_name, name = "gaussian_data")
+  sep_string = format(sep, nsmall = 1)
+  save_name = glue("./data_inputs/gaussian_mixtures-sep={sep_string}.jld")
+  h5save(scaled_gaussian_data, file = save_name, name = "gaussian_data")
 }
 
 ```
-
 
 ## Multivariate laplace
 
 using the same mean and covariance definitions
 
 ```{r}
-laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels <- rep(NA, N)
+for (sep in seps) {
+  mean_1 <- runif(2)
+  theta = runif(1, min = 0, max = 2 * pi)
+  mean_2 <- c(mean_1[1] + sep * cos(theta), mean_1[2] + sep * sin(theta))
+  means <- list(mean_1, mean_2)
+  cov <- diag(DIMS) * 0.05
 
-for (i in 1:N) {
-  z_vec <- rmultinom(1, 1, w)
-  z_group <- which(z_vec == 1)
-  laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
-  true_labels[i] <- z_group
+  laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
+    true_labels[i] <- z_group
+  }
+
+  scaled_laplace_data = scale(laplace_data)
+  laplace_df <- create_sim_df(scaled_laplace_data, true_labels)
+  p1 = plot_generated_data(laplace_df, "Laplace")
+  print(p1)
+  
+  sep_string = format(sep, nsmall = 1)
+  save_name = glue("./data_inputs/laplace_mixtures-sep={sep_string}.jld")
+  h5save(scaled_laplace_data, file = save_name, name = "laplace_data")
 }
-
-laplace_df <- create_sim_df(laplace_data, true_labels)
-plot_generated_data(laplace_df, "Laplace")
-
-h5save(laplace_data, file="../data/laplace_data.jld", name="laplace_data")
 ```
 
 ## Skew-normal distribution
-
 ```{r}
 omega <- matrix(c(0.1, 0, 0, 0.7), nrow = DIMS, byrow = TRUE)
 SN_ALPHA <- c(1, 3)
@@ -149,3 +159,186 @@ student_t_df <- create_sim_df(student_t_data, true_labels)
 plot_generated_data(student_t_df, "Student's t")
 
 h5save(student_t_data, file="../data/student_t_data.jld", name="student_t_data")
+```
+
+## Analysis
+
+```{r}
+library(ggpubr)
+
+K_0 = 2
+seps = seq(1, 5, 0.5)
+ns = c(100, 250, 500, 1000)
+m = 30
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Gaussian Mixtures - 2 component - n={n}"))
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Gaussian Mixtures - 2 component - n={n}"))
+  
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  ggsave(glue("./plot/pmf-gaussian-mixtures-n={n}.pdf", plot=plot))
+}
+
+
+```
+```{r}
+```
+
+
+```{r}
+K_0 = 2
+seps = c(2.5)
+ns = c(250)
+m = 30
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/local_k_posteriors-mvn-mfm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/local_t_posteriors-mvn-dpm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Gaussian Mixtures - 2 component - n={n}"))
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Gaussian Mixtures - 2 component - n={n}"))
+  
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  # ggsave(glue("./plot/pmf-gaussian-mixtures-n={n}.pdf", plot=plot))
+}
+```
+
+```{r}
+
+K_0 = 2
+seps = seq(1, 5, 0.5)
+ns = c(100, 250)
+m = 30
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-laplace_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-laplace_mixtures.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Laplace Mixtures - 2 component - n={n}"))
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Laplace Mixtures - 2 component - n={n}"))
+  
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  ggsave(glue("./plot/pmf-laplace-mixtures-n={n}.pdf", plot=plot))
+}
+
+```
+
+
+```{r}
+
+```
