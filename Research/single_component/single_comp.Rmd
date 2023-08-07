@@ -91,7 +91,7 @@ $$
 
 ```{r}
 sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
 m = 10
 K_0 = 2
 
@@ -488,18 +488,37 @@ df %>% ggplot(aes(x = x)) + geom_density()
 
 ```{r}
 # TODO: These should not be fixed
-sigma =  matrix(c(150, 2, 2, 150), nrow=2, ncol=2)
+ss = c(1, 2, 3, 4, 5)
 mu = c(0, 0)
 n = 10000
 
-for (set in 1:50) {
-  data = rmvl(n = n, mu=mu, Sigma = sigma)
-  save_name = glue("./data_inputs/laplace/2d/single_laplace_2d-sigma=5-set-{set}.jld")
-  # h5save(data, file = save_name, name = "data")
+for (s in ss) {
+  sigma =  matrix(c(s, 0, 0, s), nrow = 2, ncol = 2)
+  for (set in 1:50) {
+    data = rmvl(n = n, mu=mu, Sigma = sigma)
+    save_name = glue("./data_inputs/laplace/2d/single_laplace_2d-sigma={s}-set-{set}.jld")
+    h5save(data, file = save_name, name = "data")
+  }
 }
 
-# df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=5-set-8.jld", "data"))
-df = as.data.frame(data)
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=1-set-8.jld", "data"))
+# df = as.data.frame(data)
+df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=2-set-8.jld", "data"))
+# df = as.data.frame(data)
+df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=3-set-8.jld", "data"))
+# df = as.data.frame(data)
+df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=4-set-8.jld", "data"))
+# df = as.data.frame(data)
+df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=5-set-8.jld", "data"))
+# df = as.data.frame(data)
 df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
 
 ```
@@ -579,8 +598,9 @@ for (alpha in alphas) {
 
 ```{r}
 sets = 1:50
-ns = c(100, 250, 500, 750)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
+K_0 = 1
 
 plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
   pmf = matrix(NA, nrow = m, ncol = length(sets))
@@ -607,9 +627,9 @@ plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
       geom_point(aes(color = set)) +
       geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
       scale_x_continuous(name = "k", breaks = 1:m) +
-      ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
+      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
       scale_color_grey(start=0.7, end=0)
-
+    print(pmf_plot)
     map_k = apply(pmf, 2, which.max)
     avg_map_k[i_n] = mean(map_k)
   }
@@ -629,11 +649,11 @@ df = as.data.frame(
 )
 colnames(df) <- c("n", alphas)
 long_df = melt(df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "alpha", "avg_map_k")
+colnames(long_df) = c("n", "lambda", "avg_map_k")
 pmf_plot = long_df %>%
   ggplot(aes(x = n, y = avg_map_k)) +
-  geom_line(aes(colour = alpha), linewidth = 1) +
-  geom_point(aes(color = alpha)) +
+  geom_line(aes(colour = lambda), linewidth = 1) +
+  geom_point(aes(color = lambda)) +
   scale_x_continuous(name = "n") +
   scale_color_grey(start=0.7, end=0)
 print(pmf_plot)

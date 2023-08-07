@@ -23,7 +23,6 @@ lambdas = [1, 2, 3, 4, 5]::Array{Int}
     return mfm_result
 end
 
-
 # iterate over sets
 @sync @distributed for set in sets
 
