@@ -46,6 +46,23 @@ $$
 \Omega = \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} \quad \alpha = (5, 5) \quad \xi = (0, 0) \quad n=10^6
 $$
 
+
+
+```{r}
+# ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000)
+# sets = c(1, 6, 11, 16, 21, 26, 31, 36, 41, 46)
+# 
+# for (set in sets) {
+#   for (n in ns) {
+#     filename =  glue("./comp_outputs/skew_norm/1d/t_posterior-single_skew_normal_1d-n={n}-alpha=0-set-{set}.jld")
+#     to_filename =  glue("./comp_outputs/skew_norm/1d/t_posterior-single_skew_normal_1d-alpha=0-n={n}-set-{set}.jld")
+#     file.rename(filename, to_filename)
+#   }
+# }
+```
+
+
+
 ```{r}
 # TODO: These should not be fixed
 Omega = matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
@@ -71,10 +88,101 @@ df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
 $$
 \alpha = (5, 5)
 $$
+
+```{r}
+sets = 1:50
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000)
+m = 10
+K_0 = 2
+
+plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
+  pmf = matrix(NA, nrow = m, ncol = length(sets))
+  avg_map_k = rep(NA, length(ns))
+  
+  for (i_n in seq_along(ns)) {
+    n = ns[i_n]
+    
+    for (i_set in seq_along(sets)) {
+      set = sets[i_set]
+      filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
+      k_posterior = h5read(filename, "k_posterior")
+      pmf[, i_set] = k_posterior[1:m]
+    }
+    
+    df = as.data.frame(cbind(1:m, pmf))
+    colnames(df) = c("k", sets)
+    long_df = melt(df,  id.vars = "k", variable.name = "series")
+    colnames(long_df) = c("k", "set", "pmf")
+  
+    pmf_plot = long_df %>%
+      ggplot(aes(x = k, y = pmf)) +
+      geom_line(aes(colour = set), linewidth = 1) +
+      geom_point(aes(color = set)) +
+      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+      scale_x_continuous(name = "k", breaks = 1:m) +
+      ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
+      scale_color_grey(start=0.7, end=0)
+    # print(pmf_plot)
+    
+    map_k = apply(pmf, 2, which.max)
+    avg_map_k[i_n] = mean(map_k)
+  }
+  return(avg_map_k)
+}
+
+alphas = c(0, 1, 2, 5, 7)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(0, ns, m, K_0, 1),
+    plot_avg_map_k(1, ns, m, K_0, 1),
+    plot_avg_map_k(2, ns, m, K_0, 1),
+    plot_avg_map_k(5, ns, m, K_0, 1),
+    plot_avg_map_k(7, ns, m, K_0, 1)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "alpha", "avg_map_k")
+pmf_plot = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = alpha), linewidth = 1) +
+  geom_point(aes(color = alpha)) +
+  scale_x_continuous(name = "n") +
+  scale_color_grey(start=0.7, end=0)
+print(pmf_plot)
+
+
+ns = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(0, ns, m, K_0, 2),
+    plot_avg_map_k(1, ns, m, K_0, 2),
+    plot_avg_map_k(2, ns, m, K_0, 2),
+    plot_avg_map_k(5, ns, m, K_0, 2),
+    plot_avg_map_k(7, ns, m, K_0, 2)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "alpha", "avg_map_k")
+
+pmf_plot = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = alpha), linewidth = 1) +
+  geom_point(aes(color = alpha)) +
+  scale_x_continuous(name = "n") +
+  scale_color_grey(start=0.7, end=0)
+print(pmf_plot)
+
+```
+
+
 ```{r}
 sets = 1:50
 # ns = c(100)
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
 K_0 = 2
 
@@ -86,7 +194,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename =  glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=5-n={n}-set-{set}.jld")
+    filename =  glue("./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=5-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -139,7 +247,7 @@ $$
 ```{r}
 sets = 1:50
 # ns = c(100)
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
 K_0 = 2
 
@@ -151,7 +259,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=2-n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=2-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -183,7 +291,7 @@ $$
 $$
 ```{r}
 sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
 K_0 = 2
 
@@ -195,7 +303,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=7-n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=7-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -224,7 +332,7 @@ plot(log(ns), avg_map_k_7)
 
 ```{r}
 sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
 K_0 = 2
 
@@ -236,7 +344,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=0-n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=0-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -266,9 +374,9 @@ plot(log(ns), avg_map_k_0)
 
 ```{r}
 sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
-K_0 = 2
+K_0 = 1
 
 pmf = matrix(NA, nrow = m, ncol = length(sets))
 avg_map_k_1 = rep(NA, length(ns))
@@ -278,7 +386,7 @@ for (i_n in seq_along(ns)) {
   
   for (i_set in seq_along(sets)) {
     set = sets[i_set]
-    filename = glue("./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=1-n={n}-set-{set}.jld")
+    filename = glue("./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-alpha=1-n={n}-set-{set}.jld")
     k_posterior = h5read(filename, "k_posterior")
     pmf[, i_set] = k_posterior[1:m]
   }
@@ -353,10 +461,30 @@ for (set in 1:50) {
   h5save(data, file = save_name, name = "data")
 }
 
-df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_2d-sigma=1-set-8.jld", "data"))
+df = as.data.frame(h5read("./data_inputs/laplace/2d/single_laplace_1d-sigma=1-set-8.jld", "data"))
 # df = rbind(data1, data2)
-df %>% ggplot(aes(x = V1, y=V2)) + geom_point()
+df %>% ggplot(aes(x = V1)) + geom_density()
 ```
+
+```{r}
+# TODO: These should not be fixed
+mu = 0
+lambda = 4
+n = 10000
+
+for (set in 1:50) {
+  data = rlaplace(n = n, location=mu, scale=lambda)
+  save_name = glue("./data_inputs/laplace/1d/single_laplace_1d-lambda={lambda}-set-{set}.jld")
+  h5save(data, file = save_name, name = "data")
+}
+
+df = as.data.frame(h5read("./data_inputs/laplace/1d/single_laplace_1d-lambda=3-set-8.jld", "data"))
+colnames(df) = c("x")
+# df = rbind(data1, data2)
+df %>% ggplot(aes(x = x)) + geom_density()
+```
+
+
 
 ```{r}
 # TODO: These should not be fixed
@@ -443,4 +571,70 @@ for (alpha in alphas) {
 }
 
 
+```
+
+
+
+
+
+```{r}
+sets = 1:50
+ns = c(100, 250, 500, 750)
+m = 10
+
+plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
+  pmf = matrix(NA, nrow = m, ncol = length(sets))
+  avg_map_k = rep(NA, length(ns))
+  
+  for (i_n in seq_along(ns)) {
+    n = ns[i_n]
+    
+    for (i_set in seq_along(sets)) {
+      set = sets[i_set]
+      filename = glue("./comp_outputs/laplace/{dim}d/k_posterior-single_laplace_{dim}d-lambda={alpha}-n={n}-set-{set}.jld")
+      k_posterior = h5read(filename, "k_posterior")
+      pmf[, i_set] = k_posterior[1:m]
+    }
+    
+    df = as.data.frame(cbind(1:m, pmf))
+    colnames(df) = c("k", sets)
+    long_df = melt(df,  id.vars = "k", variable.name = "series")
+    colnames(long_df) = c("k", "set", "pmf")
+  
+    pmf_plot = long_df %>%
+      ggplot(aes(x = k, y = pmf)) +
+      geom_line(aes(colour = set), linewidth = 1) +
+      geom_point(aes(color = set)) +
+      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+      scale_x_continuous(name = "k", breaks = 1:m) +
+      ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
+      scale_color_grey(start=0.7, end=0)
+
+    map_k = apply(pmf, 2, which.max)
+    avg_map_k[i_n] = mean(map_k)
+  }
+  return(avg_map_k)
+}
+
+alphas = c(1, 2, 3, 4, 5)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(1, ns, m, K_0, 1),
+    plot_avg_map_k(2, ns, m, K_0, 1),
+    plot_avg_map_k(3, ns, m, K_0, 1),
+    plot_avg_map_k(4, ns, m, K_0, 1),
+    plot_avg_map_k(5, ns, m, K_0, 1)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "alpha", "avg_map_k")
+pmf_plot = long_df %>%
+  ggplot(aes(x = n, y = avg_map_k)) +
+  geom_line(aes(colour = alpha), linewidth = 1) +
+  geom_point(aes(color = alpha)) +
+  scale_x_continuous(name = "n") +
+  scale_color_grey(start=0.7, end=0)
+print(pmf_plot)
 ```

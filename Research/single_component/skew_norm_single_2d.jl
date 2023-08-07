@@ -4,7 +4,7 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000]::Array{Int}
+ns = [5000, 7500, 10000]::Array{Int} #, 1000, 1500, 2500, 5000, 7500, 10000]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
 alphas = [0, 1, 2, 5, 7]::Array{Int}
@@ -42,7 +42,7 @@ end
             # run MFM sampler
             mcmc_its = 10^5
             mcmc_burn = Int(mcmc_its / 10)
-            t_max = Int(n / 2)
+            t_max = 250
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
             k_posterior = BayesianMixtures.k_posterior(result)
@@ -50,13 +50,13 @@ end
 
             # what results to store
             save(
-                "./comp_outputs/skew_norm/2d/k_posterior_single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
+                "./comp_outputs/skew_norm/2d/k_posterior-single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
                 "k_posterior",
                 k_posterior
             )
 
             save(
-                "./comp_outputs/skew_norm/2d/t_posterior_single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
+                "./comp_outputs/skew_norm/2d/t_posterior-single_skew_normal_2d-alpha=$alpha-n=$n-set-$set.jld",
                 "t_posterior",
                 t_posterior
             )
