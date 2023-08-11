@@ -4,7 +4,7 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [100, 250, 500, 750]
+ns = [1000]
 n_sets = 50
 sets = 1:n_sets
 sigmas = [1, 2, 3, 4, 5]::Array{Int}

@@ -4,10 +4,10 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [250, 500, 750]::Array{Int}
+ns = [100, 250, 500, 750]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
-ss = [2, 4, 6, 8, 10]::Array{Int}
+dofs = [2, 5, 10, 50, 1000]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
     mfm_options = BayesianMixtures.options(
@@ -26,10 +26,10 @@ end
 # iterate over sets
 @sync @distributed for set in sets
 
-    for s in ss
+    for dof in dofs
 
         all_data = h5read(
-            "./data_inputs/student_t/1d/single_student_t_1d-s=$s-set-$set.jld",
+            "./data_inputs/student_t/1d/single_t_1d-dof=$dof-set-$set.jld",
             "data"
         )
 
@@ -49,13 +49,13 @@ end
 
             # what results to store
             save(
-                "./comp_outputs/student_t/1d/k_posterior-single_student_t_1d-s=$s-n=$n-set-$set.jld",
+                "./comp_outputs/student_t/1d/k_posterior-single_t_1d-dof=$dof-n=$n-set-$set.jld",
                 "k_posterior",
                 k_posterior
             )
 
             save(
-                "./comp_outputs/student_t/1d/t_posterior-single_student_t_1d-s=$s-n=$n-set-$set.jld",
+                "./comp_outputs/student_t/1d/t_posterior-single_t_1d-dof=$dof-n=$n-set-$set.jld",
                 "t_posterior",
                 t_posterior
             )
