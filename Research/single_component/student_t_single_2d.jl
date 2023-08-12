@@ -41,7 +41,7 @@ end
             # run MFM sampler
             mcmc_its = 10^5
             mcmc_burn = Int(mcmc_its / 10)
-            t_max = n
+            t_max = 250
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
             k_posterior = BayesianMixtures.k_posterior(result)

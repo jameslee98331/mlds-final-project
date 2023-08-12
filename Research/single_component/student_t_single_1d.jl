@@ -4,7 +4,7 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [100, 250, 500, 750]::Array{Int}
+ns = [1000]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
 dofs = [2, 5, 10, 50, 1000]::Array{Int}
@@ -41,7 +41,7 @@ end
             # run MFM sampler
             mcmc_its = 10^5
             mcmc_burn = Int(mcmc_its / 10)
-            t_max = n
+            t_max = 250
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
             k_posterior = BayesianMixtures.k_posterior(result)
