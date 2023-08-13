@@ -4,10 +4,11 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [1000]
+ns = [100, 250, 500, 750]
 n_sets = 50
 sets = 1:n_sets
-sigmas = [1, 2, 3, 4, 5]::Array{Int}
+dofs = [2, 5, 10, 50, 1000]::Array{Int}
+
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
     mfm_options = BayesianMixtures.options(
@@ -26,10 +27,10 @@ end
 # iterate over ns
 @sync @distributed for set in sets
 
-    for sigma in sigmas
+    for dof in dofs
 
         all_data = h5read(
-            "./data_inputs/laplace/2d/single_laplace_2d-sigma=$sigma-set-$set.jld",
+            "./data_inputs/student_t/2d/single_t_2d-dof=$dof-set-$set.jld",
             "data"
         )
 
@@ -41,7 +42,7 @@ end
             # run MFM sampler
             mcmc_its = 10^5
             mcmc_burn = Int(mcmc_its / 10)
-            t_max = 250
+            t_max = n
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
             k_posterior = BayesianMixtures.k_posterior(result)
@@ -49,13 +50,13 @@ end
 
             # what results to store
             save(
-                "./comp_outputs/laplace/2d/k_posterior-single_laplace_2d-sigma=$sigma-n=$n-set-$set.jld",
+                "./comp_outputs/student_t/2d/k_posterior-single_t_2d-dof=$dof-n=$n-set-$set.jld",
                 "k_posterior",
                 k_posterior
             )
 
             save(
-                "./comp_outputs/laplace/2d/t_posterior-single_laplace_2d-sigma=$sigma-n=$n-set-$set.jld",
+                "./comp_outputs/student_t/2d/t_posterior-single_t_2d-dof=$dof-n=$n-set-$set.jld",
                 "t_posterior",
                 t_posterior
             )
