@@ -1,59 +1,84 @@
-using Distributions
-using PyPlot
-using HDF5
-using JLD
-using Random
+using Distributed
+addprocs(5)
+@everywhere using Distributions
+@everywhere using HDF5
+@everywhere using JLD
+@everywhere using Random
 
-include("setup.jl")
+@everywhere include("setup.jl")
 
-# Settings
-mcmc_its = 10^5  # number of MCMC iterations
-mcmc_burn = Int(mcmc_its / 10)  # number of iterations to discard as burn-in
-t_max = 10
+ns = [100, 250, 500, 750]::Array{Int}
+n_sets = 50
+sets = 1:n_sets
+alphas = [10000]::Array{Int}
 
-ns = [100, 250, 500, 1000, 2500, 5000, 10000] # sample sizes n to use
-alphas = [10^2, 10^3, 10^4, 10^5, Inf]  # robustification params alpha to use
-seps = 1:0.5:5
-n_reps = 5  # number of times to run the simulation
-# seps = ["6.0", "7.0", "8.0", "9.0", "10.0", "15.0", "25.0", "50.0", "100.0", "200.0", "1000.0", "2000.0", "5000.0", "10000.0", "1e+05", "1e+06"]
-
-for alpha in alphas
-    for (i_n, n) in enumerate(ns)
-        for (i_sep, sep) in enumerate(seps)
-
-            all_data = h5read("./data_inputs/skew_normal_mixtures_1d-sep=$sep.jld", "skew_norm_data")
-            k_posteriors = zeros(t_max, n_reps)
-    
-            for rep in 1:n_reps
-    
-                Random.seed!(n + rep) # Reset RNG
-                shuffled_data = shuffle(all_data)
-                data = [shuffled_data[j]::Float64 for j in 1:n]
-
-                zeta = (1 / n) / ((1 / n) + (1 / alpha))
-
-                println("rep = $rep, n = $n, sep = $sep, alpha = $alpha, zeta=$zeta")    
-                # Run sampler
-                elapsed_time = (
-                    @elapsed p, theta, k_r, v_r, art, arv, m_r, s_r = sampler(
-                    data, mcmc_its, t_max, c, sigma, zeta
-                )
-                )
-
-                time_per_step = elapsed_time / mcmc_its
-                println("Elapsed time = $elapsed_time seconds")
-                println("Time per step = $time_per_step seconds")
-    
-                # Compute posterior on k
-                counts, bins = hist(k_r[mcmc_burn+1:end], range(1, t_max + 1, t_max + 1))
-                k_posteriors[:, rep] = counts / (mcmc_its - mcmc_burn)
+@everywhere function histogram(x, edges=[]; n_bins=50, weights=ones(length(x)))
+    if isempty(edges)
+        mn, mx = minimum(x), maximum(x)
+        r = mx - mn
+        edges = range(mn - r / n_bins, stop=mx + r / n_bins, length=n_bins)
+    else
+        n_bins = length(edges) - 1
+    end
+    counts = zeros(Float64, n_bins)
+    for i = 1:length(x)
+        for j = 1:n_bins
+            if (edges[j] < x[i] <= edges[j+1])
+                counts[j] += weights[i]
+                break
             end
+        end
+    end
+    return counts, edges
+end
 
-            save_fullpath = "./comp_outputs/k_posteriors-alpha=$alpha-n=$n-sep=$sep-1d_skew_norm_mixtures.jld"
-            save(save_fullpath, "k_posteriors", k_posteriors)
-            println("Saved to $save_fullpath")
+@everywhere function run_simulation(data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta)
+    elapsed_time = (
+        @elapsed p, theta, k_r, v_r, art, arv, m_r, s_r = sampler(
+        data, mcmc_its, t_max, c, sigma, zeta
+    )
+    )
+    time_per_step = elapsed_time / mcmc_its
+    println("Elapsed time = $elapsed_time seconds")
+    println("Time per step = $time_per_step seconds")
+
+    # Compute posterior on k
+    use = mcmc_burn+1:mcmc_its
+
+    # bins are: (0,1],(1,2],...,(t_max-1,t_max]
+    counts, edges = histogram(k_r[use], 0:t_max)
+    k_posterior = counts / length(use)
+
+    return k_posterior
+end
+
+@sync @distributed for set in sets
+    all_data = h5read(
+        "../single_component/data_inputs/skew_norm/1d/single_skew_normal_1d-alpha=7-set-$set.jld",
+        "data"
+    )
+
+    for alpha in alphas
+        for n in ns
+
+            data = [all_data[j]::Float64 for j in 1:n]
+
+            zeta = (1 / n) / ((1 / n) + (1 / alpha))
+
+            println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
+
+            # Run sampler
+            mcmc_its = 10^5
+            mcmc_burn = Int(mcmc_its / 10)
+            t_max = 10
+
+            k_posterior = run_simulation(
+                data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
+            )
+
+            save_fullpath = "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
+            save(save_fullpath, "k_posterior", k_posterior)
             println()
-
         end
     end
 end
