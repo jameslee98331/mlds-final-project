@@ -1,16 +1,17 @@
 using Distributed
-addprocs(5)
+addprocs(10)
 @everywhere using Distributions
 @everywhere using HDF5
 @everywhere using JLD
 @everywhere using Random
+@everywhere using Dates
 
-@everywhere include("setup.jl")
+@everywhere include("setup_1d.jl")
 
-ns = [100, 250, 500, 750]::Array{Int}
+ns = [1000, 1500, 2500]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
-alphas = [10000]::Array{Int}
+alphas = [10, 50, 70, 80, 100, 1000]::Array{Int}
 
 @everywhere function histogram(x, edges=[]; n_bins=50, weights=ones(length(x)))
     if isempty(edges)
@@ -20,8 +21,9 @@ alphas = [10000]::Array{Int}
     else
         n_bins = length(edges) - 1
     end
+
     counts = zeros(Float64, n_bins)
-    for i = 1:length(x)
+    for i in eachindex(x)
         for j = 1:n_bins
             if (edges[j] < x[i] <= edges[j+1])
                 counts[j] += weights[i]
@@ -65,6 +67,7 @@ end
 
             zeta = (1 / n) / ((1 / n) + (1 / alpha))
 
+            prinln(Dates.now())
             println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
 
             # Run sampler
