@@ -72,7 +72,8 @@ for (alpha in alphas) {
   colnames(df) = c("x")
   p = df %>% ggplot(aes(x = x)) + 
     geom_histogram(bins = 20, fill = "#619cff", color = "#000000", alpha = 0.9) + 
-    theme(plot.title = element_text(size = 10))
+    theme(plot.title = element_text(size = 10), text = element_text(size = 20))
+  print(p)
   ggsave(
     glue("./plots/single_skew_normal_1d_examples-alpha={alpha}.pdf"),
     p,
@@ -121,9 +122,10 @@ for (alpha in alphas) {
   colnames(df) = c("x", "y")
   p = df %>% ggplot(aes(x = x, y = y)) +
     geom_point(size = 0.1, color="#619CFF") + 
-    theme(plot.title = element_text(size = 10))
+    theme(plot.title = element_text(size = 10), text = element_text(size = 20))
+  print(p)
   ggsave(
-    glue("./plots/single_skew_normal_2d_alpha={alpha}_examples.pdf"),
+    glue("./plots/single_skew_normal_2d_examples-alpha={alpha}.pdf"),
     p,
     width = 5,
     height = 5,
@@ -136,20 +138,10 @@ for (alpha in alphas) {
 # p = do.call("grid.arrange", c(plot_created_data, ncol = 5))
 
 ```
-
-
-## Simulation Results
-
-From the simulation results, we can see that with increasing $\alpha$, the posterior on the number
-of components is increasingly inconsistent.
+Results
 
 ```{r}
-sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
-m = 10
-K_0 = 2
-
-plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
+plot_avg_map_k <- function(alpha, ns, m, K_0, dim, sets) {
   pmf = matrix(NA, nrow = m, ncol = length(sets))
   avg_map_k = rep(NA, length(ns))
   
@@ -163,36 +155,25 @@ plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
       pmf[, i_set] = k_posterior[1:m]
     }
     
-    # df = as.data.frame(cbind(1:m, pmf))
-    # colnames(df) = c("k", sets)
-    # long_df = melt(df,  id.vars = "k", variable.name = "series")
-    # colnames(long_df) = c("k", "set", "pmf")
-    # 
-    # pmf_plot = long_df %>%
-    #   ggplot(aes(x = k, y = pmf)) +
-    #   geom_line(aes(colour = set), linewidth = 1) +
-    #   geom_point(aes(color = set)) +
-    #   geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    #   scale_x_continuous(name = "k", breaks = 1:m) +
-    #   ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
-    #   scale_color_grey(start=0.7, end=0)
-    # print(pmf_plot)
-    
     map_k = apply(pmf, 2, which.max)
     avg_map_k[i_n] = mean(map_k)
   }
   return(avg_map_k)
 }
 
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
 alphas = c(0, 1, 2, 5, 7)
+sets = 1:50
+m = 10
+K_0 = 2
 df = as.data.frame(
   cbind(
     ns,
-    plot_avg_map_k(0, ns, m, K_0, 1),
-    plot_avg_map_k(1, ns, m, K_0, 1),
-    plot_avg_map_k(2, ns, m, K_0, 1),
-    plot_avg_map_k(5, ns, m, K_0, 1),
-    plot_avg_map_k(7, ns, m, K_0, 1)
+    plot_avg_map_k(0, ns, m, K_0, 1, sets),
+    plot_avg_map_k(1, ns, m, K_0, 1, sets),
+    plot_avg_map_k(2, ns, m, K_0, 1, sets),
+    plot_avg_map_k(5, ns, m, K_0, 1, sets),
+    plot_avg_map_k(7, ns, m, K_0, 1, sets)
   )
 )
 colnames(df) <- c("n", alphas)
@@ -211,11 +192,11 @@ ns = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000)
 df = as.data.frame(
   cbind(
     ns,
-    plot_avg_map_k(0, ns, m, K_0, 2),
-    plot_avg_map_k(1, ns, m, K_0, 2),
-    plot_avg_map_k(2, ns, m, K_0, 2),
-    plot_avg_map_k(5, ns, m, K_0, 2),
-    plot_avg_map_k(7, ns, m, K_0, 2)
+    plot_avg_map_k(0, ns, m, K_0, 2, sets),
+    plot_avg_map_k(1, ns, m, K_0, 2, sets),
+    plot_avg_map_k(2, ns, m, K_0, 2, sets),
+    plot_avg_map_k(5, ns, m, K_0, 2, sets),
+    plot_avg_map_k(7, ns, m, K_0, 2, sets)
   )
 )
 colnames(df) <- c("n", alphas)
@@ -230,9 +211,45 @@ pmf_plot_2d = long_df %>%
   scale_y_continuous("Mean MAP-k", 1:6) +
   ggtitle("2D")
 
-p = ggarrange(pmf_plot_1d, pmf_plot_2d, ncol = 2)
-ggsave("./plots/single_skew_normal_results.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
+print(pmf_plot_1d)
+print(pmf_plot_2d)
+# p = ggarrange(pmf_plot_1d, pmf_plot_2d, ncol = 2)
+# ggsave("./plots/single_skew_normal_results.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
 ```
+
+```{r}
+sets = 1:50
+dim = 2
+n = 1000
+alpha = 7
+pmf = matrix(NA, nrow = m, ncol = length(sets))
+
+for (i_set in seq_along(sets)) {
+  set = sets[i_set]
+  filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
+  k_posterior = h5read(filename, "k_posterior")
+  pmf[, i_set] = k_posterior[1:m]
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", sets)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "set", "pmf")
+
+pmf_plot = long_df %>%
+  filter(set == 9) %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = set), linewidth = 1) +
+  geom_point(aes(color = set)) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) +
+  ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
+  scale_color_grey(start = 0.7, end = 0)
+print(pmf_plot)
+```
+
+
+
 
 # Single Laplace component
 
@@ -430,7 +447,7 @@ plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
   return(avg_map_k)
 }
 
-ns = c(100, 250, 500, 750, 1000, 1500, 2500)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500)
 alphas = c(1, 2, 3, 4, 5)
 df = as.data.frame(
   cbind(
@@ -564,7 +581,7 @@ plot_avg_map_k <- function(dof, ns, m, K_0, dim) {
 }
 
 sets = 1:50
-ns = c(100, 250, 500, 750)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
 m = 10
 K_0 = 1
 alphas = c(2, 5, 10, 50, 1000)
@@ -582,7 +599,33 @@ colnames(df) <- c("n", alphas)
 long_df = melt(df,  id.vars = "n", variable.name = "alpha")
 colnames(long_df) = c("n", "lambda", "avg_map_k")
 pmf_plot = long_df %>%
-  ggplot(aes(x = n, y = avg_map_k)) +
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = lambda), linewidth = 1) +
+  geom_point(aes(color = lambda)) +
+  scale_x_continuous(name = "n") +
+  scale_color_grey(start=0.7, end=0)
+print(pmf_plot)
+
+sets = 1:50
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+m = 10
+K_0 = 1
+alphas = c(2, 5, 10, 50, 1000)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(2, ns, m, K_0, 2),
+    plot_avg_map_k(5, ns, m, K_0, 2),
+    plot_avg_map_k(10, ns, m, K_0, 2),
+    plot_avg_map_k(50, ns, m, K_0, 2),
+    plot_avg_map_k(1000, ns, m, K_0, 2)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "lambda", "avg_map_k")
+pmf_plot = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
   geom_line(aes(colour = lambda), linewidth = 1) +
   geom_point(aes(color = lambda)) +
   scale_x_continuous(name = "n") +
@@ -590,17 +633,7 @@ pmf_plot = long_df %>%
 print(pmf_plot)
 ```
 
-```{r}
-n = 1000
-Omega = matrix(data = c(1, 0, 0, 1), nrow = 2)
 
-data_1 = rmsn(n = n, xi = c(0, 0), Omega = Omega, alpha = c(7, 7))
-data_2 = rmsn(n = n, xi = c(3, 0), Omega = Omega, alpha = c(7, 7))
-data = rbind(data_1, data_2)
-df = as.data.frame(data)
-colnames(df) = c("x", "y")
-df %>% ggplot(aes(x = x, y = y)) + geom_point()
-```
 
 # Checking convergence
 ```{r}
@@ -610,3 +643,112 @@ df = as.data.frame(cbind(1:100000, t_r))
 colnames(df) = c("iter", "t")
 df %>% ggplot() + geom_point(aes(x = iter, y = t), size = 0.1)
 ```
+
+
+# Visualise some posterior clusterings
+
+```{r}
+mcmc_its = 100000
+mcmc_burn = 10000
+set = 8
+alpha = 7
+ns = c(100, 250, 500, 750, 1000)
+
+
+read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
+all_data = h5read(
+  read_name,
+  "data"
+)
+
+
+for (n in ns) {
+
+  data = all_data[1:n, ]
+  
+  post_z_samples = h5read(
+    glue("./comp_outputs/skew_norm/2d/z_draws-single_skew_normal_2d-alpha={alpha}-n={n}-set-{set}.jld"),
+    "z"
+  )
+  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+  
+  psm = comp.psm(post_z_samples)
+  min_vi = minVI(
+    psm,
+    post_z_samples,
+    method = "avg",
+    include.greedy = FALSE
+  )
+  best_vi = min_vi$cl
+
+  # Create 
+  df = as.data.frame(cbind(data, best_vi))
+  colnames(df) = c("x", "y", "z")
+  df$z = as.factor(df$z)
+
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 1) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VI) - n={n}"))
+  print(summary_clustering_plot)
+}
+```
+
+
+```{r}
+alpha = 7
+set = 8
+read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
+data = h5read(
+    read_name,
+    "data"
+)
+```
+
+Student's t summary clustering
+```{r}
+mcmc_its = 100000
+mcmc_burn = 10000
+set = 8
+dof = 2
+ns = c(100, 250, 500, 750, 1000)
+
+
+read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+all_data = h5read(
+  read_name,
+  "data"
+)
+
+
+for (n in ns) {
+  data = all_data[1:n, ]
+  post_z_samples = h5read(
+    glue("./comp_outputs/student_t/2d/z_draws-single_t_2d-dof={dof}-n={n}-set-{set}.jld"),
+    "z"
+  )
+  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+  
+  psm = comp.psm(post_z_samples)
+  min_vi = minVI(
+    psm,
+    post_z_samples,
+    method = "avg",
+    include.greedy = FALSE
+  )
+  best_vi = min_vi$cl
+
+  # Create 
+  df = as.data.frame(cbind(data, best_vi))
+  colnames(df) = c("x", "y", "z")
+  df$z = as.factor(df$z)
+
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 1) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VI) - n={n}"))
+  print(summary_clustering_plot)
+}
+
+```
+

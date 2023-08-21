@@ -2,10 +2,10 @@
 
 # Stuff for mixture weights
 # maximum number of components
-m = 10
+t_max = 10
 
 # Gamma parameters
-a = 1 / m
+a = 1 / t_max
 
 # prior on weights (before conditioning on s>0)
 G = Gamma(a, 1 / 1)
@@ -14,7 +14,7 @@ G = Gamma(a, 1 / 1)
 lambda = 1.0
 
 # cutoff (Note: This choice makes p(k) \propto Binomial(k|m,lambda/m)I(k>0).)
-c = quantile(G, 1 - lambda / m)
+c = quantile(G, 1 - lambda / t_max)
 
 # scale for weight proposals
 sigma = 0.25

@@ -17,7 +17,7 @@ n_seps = length(seps)
 
 for (i_n, n) in enumerate(ns)
     for (i_sep, sep) in enumerate(seps)
-        
+
         # Read data
         all_data = h5read("./data_inputs/gaussian_data-sep=$sep.jld", "gaussian_data")
         dt = fit(ZScoreTransform, all_data, dims=1)

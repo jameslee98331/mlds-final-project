@@ -1,10 +1,10 @@
 using Distributed
-addprocs(10)
+addprocs(5)
 @everywhere using BayesianMixtures
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [2500, 5000]::Array{Int}
+ns = [7500, 10000]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
 dofs = [2, 5, 10, 50, 1000]::Array{Int}

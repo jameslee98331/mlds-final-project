@@ -8,10 +8,10 @@ addprocs(10)
 
 @everywhere include("setup_1d.jl")
 
-ns = [1000, 1500, 2500]::Array{Int}
+ns = [100]::Array{Int}
 n_sets = 50
-sets = 1:n_sets
-alphas = [10, 50, 70, 80, 100, 1000]::Array{Int}
+sets = [1]
+alphas = [10]::Array{Int}
 
 @everywhere function histogram(x, edges=[]; n_bins=50, weights=ones(length(x)))
     if isempty(edges)
@@ -36,7 +36,7 @@ end
 
 @everywhere function run_simulation(data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta)
     elapsed_time = (
-        @elapsed p, theta, k_r, v_r, art, arv, m_r, s_r = sampler(
+        @elapsed p, theta, k_r, v_r, z_r, art, arv, m_r, s_r = sampler(
         data, mcmc_its, t_max, c, sigma, zeta
     )
     )
@@ -51,7 +51,7 @@ end
     counts, edges = histogram(k_r[use], 0:t_max)
     k_posterior = counts / length(use)
 
-    return k_posterior
+    return k_posterior, z_r[use]
 end
 
 @sync @distributed for set in sets
@@ -67,7 +67,7 @@ end
 
             zeta = (1 / n) / ((1 / n) + (1 / alpha))
 
-            prinln(Dates.now())
+            println(Dates.now())
             println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
 
             # Run sampler
@@ -75,13 +75,15 @@ end
             mcmc_burn = Int(mcmc_its / 10)
             t_max = 10
 
-            k_posterior = run_simulation(
+            k_posterior, z_r = run_simulation(
                 data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
             )
 
             save_fullpath = "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
             save(save_fullpath, "k_posterior", k_posterior)
-            println()
+            save_fullpath = "./comp_outputs/skew_norm/1d/z_draws-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
+            save(save_fullpath, "z_draws", z_draws)
+            println(Dates.now())
         end
     end
 end
