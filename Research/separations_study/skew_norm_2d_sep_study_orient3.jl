@@ -1,7 +1,6 @@
 using Distributed
 addprocs(10)
 @everywhere using BayesianMixtures
-@everywhere using Distributions
 @everywhere using HDF5
 @everywhere using JLD
 @everywhere using Dates

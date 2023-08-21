@@ -6,8 +6,8 @@ addprocs(5)
 
 ns = [7500, 10000]::Array{Int}
 n_sets = 50
-sets = 1:n_sets
-dofs = [2, 5, 10, 50, 1000]::Array{Int}
+sets = [10, 20, 21, 44]
+dofs = [1000]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
     mfm_options = BayesianMixtures.options(
