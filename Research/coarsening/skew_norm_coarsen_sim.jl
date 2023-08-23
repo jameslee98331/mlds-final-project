@@ -8,10 +8,10 @@ addprocs(10)
 
 @everywhere include("setup_1d.jl")
 
-ns = [100]::Array{Int}
+ns = [5000, 7500, 10000]::Array{Int}
 n_sets = 50
-sets = [1]
-alphas = [10]::Array{Int}
+sets = 1:n_sets
+alphas = [10, 50, 70, 80, 100, 1000]::Array{Int}
 
 @everywhere function histogram(x, edges=[]; n_bins=50, weights=ones(length(x)))
     if isempty(edges)
@@ -36,7 +36,7 @@ end
 
 @everywhere function run_simulation(data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta)
     elapsed_time = (
-        @elapsed p, theta, k_r, v_r, z_r, art, arv, m_r, s_r = sampler(
+        @elapsed p, theta, k_r, v_r, art, arv, m_r, s_r = sampler(
         data, mcmc_its, t_max, c, sigma, zeta
     )
     )
@@ -51,7 +51,7 @@ end
     counts, edges = histogram(k_r[use], 0:t_max)
     k_posterior = counts / length(use)
 
-    return k_posterior, z_r[use]
+    return k_posterior
 end
 
 @sync @distributed for set in sets
@@ -81,8 +81,8 @@ end
 
             save_fullpath = "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
             save(save_fullpath, "k_posterior", k_posterior)
-            save_fullpath = "./comp_outputs/skew_norm/1d/z_draws-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
-            save(save_fullpath, "z_draws", z_draws)
+            # save_fullpath = "./comp_outputs/skew_norm/1d/z_draws-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
+            # save(save_fullpath, "z_draws", z_draws)
             println(Dates.now())
         end
     end

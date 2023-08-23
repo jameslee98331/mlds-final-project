@@ -129,5 +129,5 @@ function sampler(data, mcmc_its, t_max, cutoff, sigma, zeta)
     acceptance_rate_v = num_v_accepted / (t_max * mcmc_its)  # MH acceptance rate for v proposals
     p = (q / s)
 
-    return p, theta, k_r, v_r, z_r, acceptance_rate_theta, acceptance_rate_v, m_r, l_r
+    return p, theta, k_r, v_r, acceptance_rate_theta, acceptance_rate_v, m_r, l_r
 end

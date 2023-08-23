@@ -271,7 +271,70 @@ print(pmf_plot)
 ```
 
 
+```{r}
 
+plot_avg_map_k <- function(coarsen, ns, m, K_0, dim) {
+  pmf = matrix(NA, nrow = m, ncol = length(sets))
+  avg_map_k = rep(NA, length(ns))
+  
+  for (i_n in seq_along(ns)) {
+    n = ns[i_n]
+    
+    for (i_set in seq_along(sets)) {
+      set = sets[i_set]
+      filename = glue("./comp_outputs/student_t/{dim}d/k_posterior-single_t_{dim}d-coarsen={coarsen}-dof=2-n={n}-set-{set}.jld")
+      k_posterior = h5read(filename, "k_posterior")
+      pmf[, i_set] = k_posterior[1:m]
+    }
+    
+    df = as.data.frame(cbind(1:m, pmf))
+    colnames(df) = c("k", sets)
+    long_df = melt(df,  id.vars = "k", variable.name = "series")
+    colnames(long_df) = c("k", "set", "pmf")
+  
+    pmf_plot = long_df %>%
+      ggplot(aes(x = k, y = pmf)) +
+      geom_line(aes(colour = set), linewidth = 1) +
+      geom_point(aes(color = set)) +
+      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+      scale_x_continuous(name = "k", breaks = 1:m) +
+      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
+      scale_color_grey(start = 0.7, end = 0)
+    # print(pmf_plot)
+    map_k = apply(pmf, 2, which.max)
+    avg_map_k[i_n] = mean(map_k)
+  }
+  return(avg_map_k)
+}
+
+sets = 1:50
+ns = c(100, 250, 500, 750, 1000)
+m = 10
+K_0 = 1
+coarsen = c(10, 50, 70, 80, 100, 1000)
+# alphas = c(2, 5, 10, 50, 1000)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(10, ns, m, K_0, 1),
+    plot_avg_map_k(50, ns, m, K_0, 1),
+    plot_avg_map_k(70, ns, m, K_0, 1),
+    plot_avg_map_k(80, ns, m, K_0, 1),
+    plot_avg_map_k(100, ns, m, K_0, 1),
+    plot_avg_map_k(1000, ns, m, K_0, 1)
+  )
+)
+colnames(df) <- c("n", coarsen)
+long_df = melt(df,  id.vars = "n", variable.name = "coarsen")
+colnames(long_df) = c("n", "coarsen", "avg_map_k")
+pmf_plot = long_df %>%
+  ggplot(aes(x = n, y = avg_map_k)) +
+  geom_line(aes(colour = coarsen), linewidth = 1) +
+  geom_point(aes(color = coarsen)) +
+  scale_x_continuous(name = "n") +
+  scale_color_grey(start=0.7, end=0)
+print(pmf_plot)
+```
 
 
 

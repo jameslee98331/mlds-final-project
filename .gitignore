@@ -13,3 +13,5 @@
 *.out
 *.e*
 *.o*
+
+**/z_draws-*.jld
