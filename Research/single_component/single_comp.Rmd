@@ -34,23 +34,15 @@ library(mnormt)
 library(ggpubr)
 library(gridExtra)
 
+library(mcclust.ext)
+
 set.seed(0)
 ```
 
 
 
 # Skew Normal
-
 ## Create a single skew normal distribution
-### 1D
-$$
-x_i \sim \mathrm{SkewNormal}(\xi, \omega, \alpha) \quad i=1, \ldots, n
-$$
-where
-$$
-\omega = 1 \quad \xi = 0 \quad \alpha \in \{0, 1, 2, 5, 7\} \quad n=10^4
-$$
-
 ```{r}
 omega = 1
 alphas = c(0, 1, 2, 5, 7)
@@ -84,21 +76,7 @@ for (alpha in alphas) {
     device = "pdf"
   )
 }
-
 ```
-
-### 2D
-$$
-x_i \sim \mathrm{SkewNormal}_2(\xi, \Omega, \alpha) \quad i=1, \ldots, n
-$$
-where
-$$
-\Omega = \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} \quad \alpha = (\beta, \beta) \quad \xi = (0, 0) \quad n=10^4
-$$
-where
-$$
-\beta \in \{0, 1, 2, 5, 7\}
-$$
 
 ```{r}
 Omega = matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
@@ -134,11 +112,70 @@ for (alpha in alphas) {
     device = "pdf"
   )
 }
-
-# p = do.call("grid.arrange", c(plot_created_data, ncol = 5))
-
 ```
-Results
+```{r}
+set = 1
+alpha = 7
+ns = c(100, 500, 1000, 5000)
+for (n in ns) {
+  read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
+  df = as.data.frame(h5read(read_name, "data")[1:n, ])
+  colnames(df) = c("x", "y")
+  p = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(size = 1, color="#619CFF") + 
+    xlim(-5, 5) +
+    ylim(-5, 5) +
+    theme(plot.title = element_text(size = 15), text = element_text(size = 20))
+  print(p)
+  ggsave(
+    glue("./plots/single_skew_normal_2d_examples-alpha=7-n={n}.pdf"),
+    p,
+    width = 5,
+    height = 5,
+    dpi = 600,
+    units = "in",
+    device = "pdf"
+  )
+}
+```
+
+
+Single Skew Normal Results
+```{r}
+m = 10
+set = 8
+dim = 2
+K_0 = 1
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+alpha = 5
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
+  k_posterior = h5read(filename, "k_posterior")
+  pmf[, i_n] = k_posterior[1:m]
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "n", "pmf")
+
+pmf_plot = long_df %>%
+  # filter(set) %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = n), linewidth = 1) +
+  geom_point(aes(color = n)) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) +
+  theme(text = element_text(size = 15)) +
+  ylab("p(k | X)") +
+  ggtitle(glue("Posterior pmf of no. of components - alpha={alpha} - set {set} of 50"))
+print(pmf_plot)
+ggsave("./plots/example_pmfs.pdf", pmf_plot, width=10, height=5, units="in", dpi=600, device="pdf")
+```
+
 
 ```{r}
 plot_avg_map_k <- function(alpha, ns, m, K_0, dim, sets) {
@@ -165,7 +202,7 @@ ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
 alphas = c(0, 1, 2, 5, 7)
 sets = 1:50
 m = 10
-K_0 = 2
+K_0 = 1
 df = as.data.frame(
   cbind(
     ns,
@@ -185,10 +222,10 @@ pmf_plot_1d = long_df %>%
   geom_point(aes(color = alpha)) +
   scale_color_grey(start=0.7, end=0) +
   scale_x_continuous(name = "log(n)") +
-  scale_y_continuous("Mean MAP-k", 1:6) +
-  ggtitle("1D")
+  scale_y_continuous("Average MAP number of components", 1:6, limits = c(1, 6)) +
+  ggtitle("Single 1D Skew Normal Component") +
+  geom_hline(yintercept=K_0, linetype = 'dotted', col = 'blue')
 
-ns = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000)
 df = as.data.frame(
   cbind(
     ns,
@@ -208,51 +245,315 @@ pmf_plot_2d = long_df %>%
   geom_point(aes(color = alpha)) +
   scale_color_grey(start = 0.7, end = 0) +
   scale_x_continuous(name = "log(n)") +
-  scale_y_continuous("Mean MAP-k", 1:6) +
-  ggtitle("2D")
+  scale_y_continuous("Average MAP number of components", 1:6, limits = c(1, 6)) +
+  ggtitle("Single 2D Skew Normal Component") +
+  geom_hline(yintercept=K_0, linetype = 'dotted', col = 'blue')
 
 print(pmf_plot_1d)
 print(pmf_plot_2d)
-# p = ggarrange(pmf_plot_1d, pmf_plot_2d, ncol = 2)
-# ggsave("./plots/single_skew_normal_results.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
+p = ggarrange(pmf_plot_1d, pmf_plot_2d, ncol = 2)
+print(p)
+ggsave("./plots/single_skew_normal_results.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
+```
+
+
+
+
+```{r}
+dofs = c(2, 5, 10, 50, 1000)
+n = 10000
+for (dof in dofs) {
+  for (set in 1:50) {
+    data = rt(n = n, df = dof)
+    save_name = glue("./data_inputs/student_t/1d/single_t_1d-dof={dof}-set-{set}.jld")
+    # h5save(data, file = save_name, name = "data")
+  }
+}
+
+set = 1
+for (dof in dofs) {
+  read_name = glue("./data_inputs/student_t/1d/single_t_1d-dof={dof}-set-{set}.jld")
+  df = as.data.frame(h5read(read_name, "data"))
+  colnames(df) = c("x")
+  p = df %>% ggplot(aes(x = x)) +
+    geom_histogram(bins = 20, fill = "#619cff", color = "#000000", alpha = 0.9) + 
+    theme(text = element_text(size = 20))
+  print(p)
+  ggsave(
+    glue("./plots/single_t_1d_examples-dof={dof}.pdf"),
+    p,
+    width = 5,
+    height = 5,
+    dpi = 600,
+    units = "in",
+    device = "pdf"
+  )
+}
+```
+
+
+
+```{r}
+loc = c(0, 0)
+scale = matrix(c(1, 0, 0, 1), nrow = 2)
+dofs = c(2, 5, 10, 50, 1000)
+
+for (dof in dofs) {
+  for (set in 1:50) {
+    data = rmt(n = 10000, mean = loc, S = scale, df = dof)
+    save_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+    # h5save(data, file = save_name, name = "data")
+  }
+}
+
+set = 1
+for (dof in dofs) {
+  read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+  
+  df = as.data.frame(h5read(read_name, "data"))
+  colnames(df) = c("x", "y")
+  p = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(size = 0.1, color = "#619CFF") + 
+    theme(text = element_text(size = 20))
+  print(p)
+  ggsave(
+    glue("./plots/single_t_2d_examples-dof={dof}.pdf"),
+    p,
+    width = 5,
+    height = 5,
+    dpi = 600,
+    units = "in",
+    device = "pdf"
+  )
+}
 ```
 
 ```{r}
-sets = 1:50
-dim = 2
-n = 1000
-alpha = 7
-pmf = matrix(NA, nrow = m, ncol = length(sets))
-
-for (i_set in seq_along(sets)) {
-  set = sets[i_set]
-  filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
-  k_posterior = h5read(filename, "k_posterior")
-  pmf[, i_set] = k_posterior[1:m]
+plot_avg_map_k <- function(dof, ns, m, K_0, dim) {
+  pmf = matrix(NA, nrow = m, ncol = length(sets))
+  avg_map_k = rep(NA, length(ns))
+  
+  for (i_n in seq_along(ns)) {
+    n = ns[i_n]
+    
+    for (i_set in seq_along(sets)) {
+      set = sets[i_set]
+      filename = glue("./comp_outputs/student_t/{dim}d/k_posterior-single_t_{dim}d-dof={dof}-n={n}-set-{set}.jld")
+      k_posterior = h5read(filename, "k_posterior")
+      pmf[, i_set] = k_posterior[1:m]
+    }
+    
+    df = as.data.frame(cbind(1:m, pmf))
+    colnames(df) = c("k", sets)
+    long_df = melt(df,  id.vars = "k", variable.name = "series")
+    colnames(long_df) = c("k", "set", "pmf")
+  
+    pmf_plot = long_df %>%
+      ggplot(aes(x = k, y = pmf)) +
+      geom_line(aes(colour = set), linewidth = 1) +
+      geom_point(aes(color = set)) +
+      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+      scale_x_continuous(name = "k", breaks = 1:m) +
+      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
+      scale_color_grey(start = 0.7, end = 0)
+    map_k = apply(pmf, 2, which.max)
+    avg_map_k[i_n] = mean(map_k)
+  }
+  return(avg_map_k)
 }
 
-df = as.data.frame(cbind(1:m, pmf))
-colnames(df) = c("k", sets)
-long_df = melt(df,  id.vars = "k", variable.name = "series")
-colnames(long_df) = c("k", "set", "pmf")
+sets = 1:50
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
+m = 10
+K_0 = 1
+alphas = c(2, 5, 10, 50, 1000)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(2, ns, m, K_0, 1),
+    plot_avg_map_k(5, ns, m, K_0, 1),
+    plot_avg_map_k(10, ns, m, K_0, 1),
+    plot_avg_map_k(50, ns, m, K_0, 1),
+    plot_avg_map_k(1000, ns, m, K_0, 1)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "dof", "avg_map_k")
+pmf_plot_1d = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = dof), linewidth = 1) +
+  geom_point(aes(color = dof)) +
+  scale_x_continuous(name = "log(n)") +
+  scale_color_grey(start = 0, end = 0.7) +
+  scale_y_continuous("Average MAP number of components", 1:6, limits = c(1, 6)) +
+  ggtitle("Single 1D t Component") +
+  geom_hline(yintercept=K_0, linetype = 'dotted', col = 'blue')
+print(pmf_plot_1d)
 
-pmf_plot = long_df %>%
-  filter(set == 9) %>%
-  ggplot(aes(x = k, y = pmf)) +
-  geom_line(aes(colour = set), linewidth = 1) +
-  geom_point(aes(color = set)) +
-  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-  scale_x_continuous(name = "k", breaks = 1:m) +
-  ggtitle(glue("MFM - Skew Normal Mixtures - 1 component - n={n}")) +
-  scale_color_grey(start = 0.7, end = 0)
-print(pmf_plot)
+df = as.data.frame(
+  cbind(
+    ns,
+    plot_avg_map_k(2, ns, m, K_0, 2),
+    plot_avg_map_k(5, ns, m, K_0, 2),
+    plot_avg_map_k(10, ns, m, K_0, 2),
+    plot_avg_map_k(50, ns, m, K_0, 2),
+    plot_avg_map_k(1000, ns, m, K_0, 2)
+  )
+)
+colnames(df) <- c("n", alphas)
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "dof", "avg_map_k")
+pmf_plot_2d = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = dof), linewidth = 1) +
+  geom_point(aes(color = dof)) +
+  scale_x_continuous(name = "log(n)") +
+  scale_color_grey(start = 0, end = 0.7) +
+  scale_y_continuous("Average MAP number of components", 1:6, limits = c(1, 6)) +
+  ggtitle("Single 2D t Component") +
+  geom_hline(yintercept=K_0, linetype = 'dotted', col = 'blue')
+print(pmf_plot_2d)
+
+p = ggarrange(pmf_plot_1d, pmf_plot_2d, ncol = 2)
+print(p)
+ggsave("./plots/single_t_results.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
 ```
+
+# Checking convergence
+```{r}
+filename = glue("./convergence_checks/ts.jld")
+t_r = h5read(filename, "t_r")
+
+mcmc_its = 10^5
+mcmc_burn = 5 * 10^4
+mcmc_keep = mcmc_its - mcmc_burn
+
+df = as.data.frame(cbind(1:100000, t_r))
+df$class = as.factor(c(rep("burn", mcmc_burn), rep("keep", mcmc_keep)))
+colnames(df) = c("iter", "t", "class")
+
+p = df %>% 
+  mutate(rec = 1) %>% 
+  mutate(rollavg = cumsum(t)/cumsum(rec)) %>% 
+  select(-rec) %>%
+  ggplot() + 
+  geom_point(aes(x = iter, y = rollavg, color=class), size = 0.5) +
+  scale_y_continuous("Avg. posterior number of clusters") +
+  scale_x_continuous("iterations", seq(0, 100000, 25000)) +
+  ggtitle("Running posterior average number of clusters vs. MCMC iterations")
+print(p)
+ggsave("./plots/posterior_average_convergence_check.pdf", p, width=10, height=5, units="in", dpi=600, device="pdf")
+```
+
+
+# Visualise some posterior clusterings
+
+```{r}
+mcmc_its = 100000
+mcmc_burn = 10000
+set = 8
+alpha = 7
+ns = c(100, 500, 1000)
+
+read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
+all_data = h5read(
+  read_name,
+  "data"
+)
+
+
+for (n in ns) {
+
+  data = all_data[1:n, ]
+  
+  post_z_samples = h5read(
+    glue("./comp_outputs/skew_norm/2d/z_draws-single_skew_normal_2d-alpha={alpha}-n={n}-set-{set}.jld"),
+    "z"
+  )
+  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+  
+  psm = comp.psm(post_z_samples)
+  min_vi = minVI(
+    psm,
+    post_z_samples,
+    method = "draws",
+    include.greedy = FALSE
+  )
+  best_vi = min_vi$cl
+
+  # Create 
+  df = as.data.frame(cbind(data, best_vi))
+  colnames(df) = c("x", "y", "z")
+  df$z = as.factor(df$z)
+
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 0.5) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VILB Sample) - n={n}"))
+  print(summary_clustering_plot)
+  ggsave(
+    glue("./plots/single_skew_norm_summary_clustering_n={n}.pdf"),
+    summary_clustering_plot, width=10, height=5, units="in", dpi=600, device="pdf")
+}
+```
+
+Student's t summary clustering
+```{r}
+mcmc_its = 100000
+mcmc_burn = 10000
+set = 8
+dof = 2
+ns = c(100, 500, 1000)
+
+read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+all_data = h5read(
+  read_name,
+  "data"
+)
+
+
+for (n in ns) {
+  data = all_data[1:n, ]
+  post_z_samples = h5read(
+    glue("./comp_outputs/student_t/2d/z_draws-single_t_2d-dof={dof}-n={n}-set-{set}.jld"),
+    "z"
+  )
+  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+  
+  psm = comp.psm(post_z_samples)
+  min_vi = minVI(
+    psm,
+    post_z_samples,
+    method = "draws",
+    include.greedy = FALSE
+  )
+  best_vi = min_vi$cl
+
+  # Create 
+  df = as.data.frame(cbind(data, best_vi))
+  colnames(df) = c("x", "y", "z")
+  df$z = as.factor(df$z)
+
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 0.5) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VILB Sample) - n={n}"))
+  print(summary_clustering_plot)
+  ggsave(glue("./plots/single_t_summary_clustering_n={n}.pdf"), summary_clustering_plot, width=10, height=5, units="in", dpi=600, device="pdf")
+}
+
+```
+
+
+
+
+
 
 
 
 
 # Single Laplace component
-
 ## Create data
 ### 2D
 ```{r}
@@ -472,283 +773,3 @@ print(pmf_plot_2d)
 
 ggarrange(pmf_plot_1d, pmf_plot_2d, nrow = 2)
 ```
-
-
-
-```{r}
-dofs = c(2, 5, 10, 50, 1000)
-n = 10000
-for (dof in dofs) {
-  for (set in 1:50) {
-    data = rt(n = n, df = dof)
-    save_name = glue("./data_inputs/student_t/1d/single_t_1d-dof={dof}-set-{set}.jld")
-    # h5save(data, file = save_name, name = "data")
-  }
-}
-
-set = 1
-for (dof in dofs) {
-  read_name = glue("./data_inputs/student_t/1d/single_t_1d-dof={dof}-set-{set}.jld")
-  df = as.data.frame(h5read(read_name, "data"))
-  colnames(df) = c("x")
-  p = df %>% ggplot(aes(x = x)) +
-    geom_histogram(bins = 20, fill = "#619cff", color = "#000000", alpha = 0.9) + 
-    ggtitle(glue("dof={dof} - set={set}")) +
-    theme(plot.title = element_text(size = 10))
-  print(p)
-  ggsave(
-    glue("./plots/single_t_1d-dof={dof}_examples.pdf"),
-    p,
-    width = 5,
-    height = 5,
-    dpi = 600,
-    units = "in",
-    device = "pdf"
-  )
-}
-```
-
-
-
-```{r}
-loc = c(0, 0)
-scale = matrix(c(1, 0, 0, 1), nrow = 2)
-dofs = c(2, 5, 10, 50, 1000)
-
-for (dof in dofs) {
-  for (set in 1:50) {
-    data = rmt(n = 10000, mean = loc, S = scale, df = dof)
-    save_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
-    h5save(data, file = save_name, name = "data")
-  }
-}
-
-set = 1
-for (dof in dofs) {
-  read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
-  
-  df = as.data.frame(h5read(read_name, "data"))
-  colnames(df) = c("x", "y")
-  p = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(size = 0.1, color = "#619CFF") + 
-    theme(plot.title = element_text(size = 10))
-  print(p)
-  ggsave(
-    glue("./plots/single_t_2d-dof={dof}_examples.pdf"),
-    p,
-    width = 5,
-    height = 5,
-    dpi = 600,
-    units = "in",
-    device = "pdf"
-  )
-}
-```
-
-```{r}
-plot_avg_map_k <- function(dof, ns, m, K_0, dim) {
-  pmf = matrix(NA, nrow = m, ncol = length(sets))
-  avg_map_k = rep(NA, length(ns))
-  
-  for (i_n in seq_along(ns)) {
-    n = ns[i_n]
-    
-    for (i_set in seq_along(sets)) {
-      set = sets[i_set]
-      filename = glue("./comp_outputs/student_t/{dim}d/k_posterior-single_t_{dim}d-dof={dof}-n={n}-set-{set}.jld")
-      k_posterior = h5read(filename, "k_posterior")
-      pmf[, i_set] = k_posterior[1:m]
-    }
-    
-    df = as.data.frame(cbind(1:m, pmf))
-    colnames(df) = c("k", sets)
-    long_df = melt(df,  id.vars = "k", variable.name = "series")
-    colnames(long_df) = c("k", "set", "pmf")
-  
-    pmf_plot = long_df %>%
-      ggplot(aes(x = k, y = pmf)) +
-      geom_line(aes(colour = set), linewidth = 1) +
-      geom_point(aes(color = set)) +
-      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-      scale_x_continuous(name = "k", breaks = 1:m) +
-      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
-      scale_color_grey(start = 0.7, end = 0)
-    # print(pmf_plot)
-    map_k = apply(pmf, 2, which.max)
-    avg_map_k[i_n] = mean(map_k)
-  }
-  return(avg_map_k)
-}
-
-sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
-m = 10
-K_0 = 1
-alphas = c(2, 5, 10, 50, 1000)
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(2, ns, m, K_0, 1),
-    plot_avg_map_k(5, ns, m, K_0, 1),
-    plot_avg_map_k(10, ns, m, K_0, 1),
-    plot_avg_map_k(50, ns, m, K_0, 1),
-    plot_avg_map_k(1000, ns, m, K_0, 1)
-  )
-)
-colnames(df) <- c("n", alphas)
-long_df = melt(df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "lambda", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = log(n), y = avg_map_k)) +
-  geom_line(aes(colour = lambda), linewidth = 1) +
-  geom_point(aes(color = lambda)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
-
-sets = 1:50
-ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000, 7500, 10000)
-m = 10
-K_0 = 1
-alphas = c(2, 5, 10, 50, 1000)
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(2, ns, m, K_0, 2),
-    plot_avg_map_k(5, ns, m, K_0, 2),
-    plot_avg_map_k(10, ns, m, K_0, 2),
-    plot_avg_map_k(50, ns, m, K_0, 2),
-    plot_avg_map_k(1000, ns, m, K_0, 2)
-  )
-)
-colnames(df) <- c("n", alphas)
-long_df = melt(df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "lambda", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = log(n), y = avg_map_k)) +
-  geom_line(aes(colour = lambda), linewidth = 1) +
-  geom_point(aes(color = lambda)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
-```
-
-
-
-# Checking convergence
-```{r}
-filename = glue("./convergence_checks/ts.jld")
-t_r = h5read(filename, "t_r")
-df = as.data.frame(cbind(1:100000, t_r))
-colnames(df) = c("iter", "t")
-df %>% ggplot() + geom_point(aes(x = iter, y = t), size = 0.1)
-```
-
-
-# Visualise some posterior clusterings
-
-```{r}
-mcmc_its = 100000
-mcmc_burn = 10000
-set = 8
-alpha = 7
-ns = c(100, 250, 500, 750, 1000)
-
-
-read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
-all_data = h5read(
-  read_name,
-  "data"
-)
-
-
-for (n in ns) {
-
-  data = all_data[1:n, ]
-  
-  post_z_samples = h5read(
-    glue("./comp_outputs/skew_norm/2d/z_draws-single_skew_normal_2d-alpha={alpha}-n={n}-set-{set}.jld"),
-    "z"
-  )
-  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
-  
-  psm = comp.psm(post_z_samples)
-  min_vi = minVI(
-    psm,
-    post_z_samples,
-    method = "avg",
-    include.greedy = FALSE
-  )
-  best_vi = min_vi$cl
-
-  # Create 
-  df = as.data.frame(cbind(data, best_vi))
-  colnames(df) = c("x", "y", "z")
-  df$z = as.factor(df$z)
-
-  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(aes(color = z), size = 1) +
-    scale_color_discrete() +
-    ggtitle(glue("Summary Clustering (Best VI) - n={n}"))
-  print(summary_clustering_plot)
-}
-```
-
-
-```{r}
-alpha = 7
-set = 8
-read_name = glue("./data_inputs/skew_norm/2d/single_skew_normal_2d-alpha={alpha}-set-{set}.jld")
-data = h5read(
-    read_name,
-    "data"
-)
-```
-
-Student's t summary clustering
-```{r}
-mcmc_its = 100000
-mcmc_burn = 10000
-set = 8
-dof = 2
-ns = c(100, 250, 500, 750, 1000)
-
-
-read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
-all_data = h5read(
-  read_name,
-  "data"
-)
-
-
-for (n in ns) {
-  data = all_data[1:n, ]
-  post_z_samples = h5read(
-    glue("./comp_outputs/student_t/2d/z_draws-single_t_2d-dof={dof}-n={n}-set-{set}.jld"),
-    "z"
-  )
-  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
-  
-  psm = comp.psm(post_z_samples)
-  min_vi = minVI(
-    psm,
-    post_z_samples,
-    method = "avg",
-    include.greedy = FALSE
-  )
-  best_vi = min_vi$cl
-
-  # Create 
-  df = as.data.frame(cbind(data, best_vi))
-  colnames(df) = c("x", "y", "z")
-  df$z = as.factor(df$z)
-
-  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(aes(color = z), size = 1) +
-    scale_color_discrete() +
-    ggtitle(glue("Summary Clustering (Best VI) - n={n}"))
-  print(summary_clustering_plot)
-}
-
-```
-

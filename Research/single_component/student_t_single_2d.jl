@@ -5,9 +5,9 @@ addprocs(10)
 @everywhere using JLD
 @everywhere using Dates
 
-ns = [10000]
+ns = [100, 250, 500, 750, 1000]
 n_sets = 50
-sets = 7:n_sets
+sets = 1:n_sets
 dofs = [2, 5, 10, 50, 1000]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
@@ -32,14 +32,14 @@ end
                 "./data_inputs/student_t/2d/single_t_2d-dof=$dof-set-$set.jld",
                 "data"
             )
-    
+
             # create dataset with 1 single component
             data = [all_data[j, :]::Array{Float64} for j in 1:n]
 
             # run MFM sampler
             mcmc_its = 10^5
-            mcmc_burn = Int(mcmc_its / 10)
-            t_max = 250
+            mcmc_burn = 50000
+            t_max = 100
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
             k_posterior = BayesianMixtures.k_posterior(result)

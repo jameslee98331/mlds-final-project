@@ -2,9 +2,9 @@ using BayesianMixtures
 using HDF5
 using JLD
 
-n = 100
-alpha = 7
-set = 1
+n = 250
+alpha = 5
+set = 8
 
 function run_simulation(x, mcmc_its, mcmc_burn, t_max)
     mfm_options = BayesianMixtures.options(

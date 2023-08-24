@@ -1,13 +1,13 @@
 using Distributed
-addprocs(5)
+addprocs(10)
 @everywhere using BayesianMixtures
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [7500, 10000]::Array{Int}
+ns = [100, 250, 500, 750, 1000]::Array{Int}
 n_sets = 50
-sets = [10, 20, 21, 44]
-dofs = [1000]::Array{Int}
+sets = 1:n_sets
+dofs = [2, 5, 10, 50, 1000]::Array{Int}
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
     mfm_options = BayesianMixtures.options(
@@ -40,7 +40,7 @@ end
 
             # run MFM sampler
             mcmc_its = 10^5
-            mcmc_burn = Int(mcmc_its / 10)
+            mcmc_burn = 50000
             t_max = 250
             result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
 
