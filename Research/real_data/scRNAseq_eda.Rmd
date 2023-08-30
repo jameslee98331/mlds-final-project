@@ -1,0 +1,200 @@
+---
+title: "MLDS Research Project"
+subtitle: "scRNAseq Study"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "25th August 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+setwd("~/coding/mlds-final-project/Research/real_data")
+```
+
+Imports
+```{r imports}
+library(tidyverse)
+library(glue)
+library(rlist)
+library(rhdf5)
+library(reshape2)
+
+library(mvtnorm)
+library(LaplacesDemon)
+library(sn)
+library(mnormt)
+
+library(ggpubr)
+library(gridExtra)
+
+library(mcclust.ext)
+
+set.seed(0)
+```
+
+
+```{r}
+df = read.csv("./data_inputs/scrnaseq_pc_df.csv")
+df$labels = as.factor(df$labels)
+p = df %>% ggplot(aes(x = PC1, y = PC2)) +
+  geom_point(aes(color = labels), size = 0.5) + 
+  ggtitle("First 2 PCs of mouse cortex cells data (colored by cell labels)") +
+  theme(text = element_text(size = 16))
+print(p)
+ggsave(
+  glue("./plots/all_pcs.pdf"),
+  p,
+  width = 10,
+  height = 5,
+  dpi = 600,
+  units = "in",
+  device = "pdf"
+)
+```
+
+```{r}
+ns = c(100, 200, 300, 400, 500, 600, 700, 800, 900)
+
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  file_name = glue("./comp_outputs/k_posteriors-pyramidal_ca1-n={n}.jld")
+  k_posterior = h5read(file_name, "k_posteriors")
+  pmf[, i_n] = k_posterior[1:m]
+}
+
+K_0 = 1
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "n", "pmf")
+
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = n), linewidth = 0.25) +
+  geom_point(aes(color = n), size = 3) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1) +
+  scale_x_continuous(name = "k", breaks = 1:m) +
+  theme(text = element_text(size = 15)) +
+  ylab("p(k | X)") +
+  ggtitle("Pyramidal CA1")
+print(pmf_plot)
+ggsave(
+  glue("./plots/pyramidal_ca1_pmfs.pdf"),
+  pmf_plot,
+  width = 10,
+  height = 5,
+  dpi = 600,
+  units = "in",
+  device = "pdf"
+)
+```
+
+Check convergence
+```{r}
+dof = 2
+
+mcmc_its = 1 * 10^5
+mcmc_burn = 5 * 10^4
+mcmc_keep = mcmc_its - mcmc_burn
+
+for (n in ns) {
+  filename = glue("./comp_outputs/t_draws-pyramidal_ca1-n={n}.jld")
+  t_draws = h5read(filename, "t")
+  df = as.data.frame(cbind(1:mcmc_its, t_draws))
+  df$class = as.factor(c(rep("burn", mcmc_burn), rep("keep", mcmc_keep)))
+  colnames(df) = c("iter", "t", "class")
+  p = df %>% 
+    mutate(rec = 1) %>% 
+    mutate(rollavg = cumsum(t)/cumsum(rec)) %>% 
+    select(-rec) %>%
+    ggplot() + 
+    geom_point(aes(x = iter, y = rollavg, color=class), size = 0.5) +
+    scale_y_continuous("Avg. posterior number of clusters") +
+    scale_x_continuous("Iteration") +
+    ggtitle("Running posterior average number of clusters") +
+    theme(text = element_text(size = 12))
+  print(p)
+  ggsave(
+    glue("./plots/post_trace-pyramidal_ca1-n={n}.pdf"),
+    p,
+    width = 5,
+    height = 5,
+    units = "in",
+    dpi = 600,
+    device = "pdf"
+  )
+}
+```
+
+Summary clustering
+```{r}
+mcmc_its = 100000
+mcmc_burn = 50000
+ns = c(100, 500, 900)
+
+all_data = h5read(
+  "./data_inputs/pyramidal CA1.jld",
+  "data"
+)
+
+for (n in ns) {
+  data = t(all_data[, 1:n])
+  post_z_samples = h5read(
+    glue("./comp_outputs/z_draws-pyramidal_ca1-n={n}.jld"),
+    "z_draws"
+  )
+  post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+
+  psm = comp.psm(post_z_samples)
+  min_vi = minVI(
+    psm,
+    post_z_samples,
+    method = "draws",
+    include.greedy = FALSE
+  )
+  best_vi = min_vi$cl
+
+  # Create
+  df = as.data.frame(cbind(data, best_vi))
+  colnames(df) = c("x", "y", "z")
+  save_file = glue("./comp_outputs/summary_clustering-pyramidal_ca1-n={n}.csv")
+  write.csv(df, file = save_file)
+}
+
+
+for (n in ns) {
+  filename = glue("./comp_outputs/summary_clustering-pyramidal_ca1-n={n}.csv")
+  df = read.csv(filename)
+  df$z = as.factor(df$z)
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 1) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VILB posterior sample) - n={n}"))
+  print(summary_clustering_plot)
+  ggsave(
+    glue("./plots/summary_clustering-pyramidal_ca1-n={n}.pdf"),
+    summary_clustering_plot,
+    width=10,
+    height=5,
+    units="in",
+    dpi=600,
+    device="pdf"
+  )
+}
+```
+
+```{r}
+
+
+```
+
+
