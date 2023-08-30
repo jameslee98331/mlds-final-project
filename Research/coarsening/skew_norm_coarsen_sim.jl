@@ -62,28 +62,28 @@ end
 
     for alpha in alphas
         for n in ns
-
-            data = [all_data[j]::Float64 for j in 1:n]
-
-            zeta = (1 / n) / ((1 / n) + (1 / alpha))
-
-            println(Dates.now())
-            println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
-
-            # Run sampler
-            mcmc_its = 10^5
-            mcmc_burn = Int(mcmc_its / 10)
-            t_max = 10
-
-            k_posterior, z_r = run_simulation(
-                data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
-            )
-
             save_fullpath = "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
-            save(save_fullpath, "k_posterior", k_posterior)
-            # save_fullpath = "./comp_outputs/skew_norm/1d/z_draws-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
-            # save(save_fullpath, "z_draws", z_draws)
-            println(Dates.now())
+
+            if !isfile(save_fullpath)
+
+                data = [all_data[j]::Float64 for j in 1:n]
+                zeta = (1 / n) / ((1 / n) + (1 / alpha))
+                println(Dates.now())
+                println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
+
+                # Run sampler
+                mcmc_its = 10^5
+                mcmc_burn = 5 * 10^4
+                t_max = 10
+                k_posterior, z_r = run_simulation(
+                    data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
+                )
+
+                save(save_fullpath, "k_posterior", k_posterior)
+                println(Dates.now())
+            else
+                println("File exists, skipping")
+            end
         end
     end
 end
