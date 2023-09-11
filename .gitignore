@@ -15,3 +15,5 @@
 *.o*
 
 **/z_draws-*.jld
+
+.DS_Store
