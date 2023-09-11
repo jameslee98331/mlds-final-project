@@ -1,0 +1,187 @@
+---
+title: "MLDS Research Project"
+subtitle: "Phase 1 - Base Cases"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "5th July 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+bibliography: ref.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+
+```{r}
+setwd("~/coding/mlds-final-project/Research/base_cases")
+source("./utils.R", local = knitr::knit_global())
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(glue)
+library(rlist)
+library(rhdf5)
+library(reshape2)
+
+library(mvtnorm)
+library(LaplacesDemon)
+library(sn)
+
+library(dirichletprocess)
+library(GBClust)
+library(mcclust)
+```
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-n={n}-gaussian_mixtures.jld"), "k_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-n={n}-gaussian_mixtures.jld"), "t_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-n={n}-laplace_mixtures.jld"), "t_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-n={n}-laplace_mixtures.jld"), "k_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-n={n}-skew_norm_mixtures.jld"), "t_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```
+
+```{r}
+K_0 = 2
+ns = c(100, 250, 500, 1000, 2500, 5000)
+m = 20
+pmf = matrix(NA, nrow = m, ncol = length(ns))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-n={n}-skew_norm_mixtures.jld"), "k_posteriors")
+  pmf[, i_n] = rowMeans(k_posteriors[1:m, ])
+}
+
+df = as.data.frame(cbind(1:m, pmf))
+colnames(df) = c("k", ns)
+long_df = melt(df,  id.vars = "k", variable.name = "series")
+colnames(long_df) = c("k", "sample_sizes", "pmf")
+pmf_plot = long_df %>%
+  ggplot(aes(x = k, y = pmf)) +
+  geom_line(aes(colour = sample_sizes), linewidth=1) +
+  geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+  scale_x_continuous(name = "k", breaks = 1:m) 
+pmf_plot
+```

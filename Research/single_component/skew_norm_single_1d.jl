@@ -4,7 +4,7 @@ addprocs(10)
 @everywhere using HDF5
 @everywhere using JLD
 
-ns = [100, 250, 500, 750, 1000]::Array{Int}
+ns = [1500, 2500, 5000]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
 alphas = [0, 1, 2, 5, 7]::Array{Int}

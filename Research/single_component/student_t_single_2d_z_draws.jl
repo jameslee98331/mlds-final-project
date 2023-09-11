@@ -5,7 +5,7 @@ addprocs(5)
 @everywhere using JLD
 
 set = 8
-dof = 5
+dof = 50
 ns = [100, 250, 500, 750, 1000]
 
 @everywhere function run_simulation(x, mcmc_its, mcmc_burn, t_max)
@@ -29,7 +29,7 @@ end
     data = [all_data[j, :]::Array{Float64} for j in 1:n]
     mcmc_its = 10^5
     mcmc_burn = 5 * 10^4
-    t_max = 100
+    t_max = 250
     result = run_simulation(data, mcmc_its, mcmc_burn, t_max)
     save(
         "./comp_outputs/student_t/2d/z_draws-single_t_2d-dof=$dof-n=$n-set-$set.jld",

@@ -1,0 +1,461 @@
+---
+title: "MLDS Research Project"
+subtitle: "Phase 1 - Base Cases"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: united
+    number_sections: true
+date: "5th July 2023"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
+author: "James Lee (CID: 01185042)"
+bibliography: ref.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+
+```{r}
+setwd("~/coding/mlds-final-project/Research/separations_study")
+source("../utils.R", local = knitr::knit_global())
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(glue)
+library(rlist)
+library(rhdf5)
+library(reshape2)
+
+library(mvtnorm)
+library(LaplacesDemon)
+library(sn)
+```
+
+# Create Gaussian mixture datasets with inreasing separation between components
+
+
+```{r}
+create_sim_df <- function(data, true_labels) {
+  # Helper function to create dataframes for simulation from
+  # generated data
+  df = as.data.frame(cbind(data, true_labels))
+  df$true_labels = as.factor(df$true_labels)
+  colnames(df) = c("x", "true_label")
+  return(df)
+}
+```
+
+
+```{r}
+set.seed(0)
+
+# True number of components
+K_0 <- 2
+N <- 10^6
+DIMS <- 1
+ALPHA <- 5
+
+alphas <- rep((ALPHA / K_0), K_0)
+w <- rdirichlet(n = 1, alpha = alphas)
+print("Component weights")
+print(w)
+
+seps = seq(1, 5, 0.5)
+
+for (sep in seps) {
+  mean_1 <- 0
+  mean_2 <- sep
+  means <- list(mean_1, mean_2)
+  sd = 1
+  
+  gaussian_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    gaussian_data[i, ] <- rnorm(1, mean = means[[z_group]], sd = sd)
+    true_labels[i] <- z_group
+  }
+  
+  scaled_gaussian_data = scale(gaussian_data)
+  df = create_sim_df(scaled_gaussian_data, true_labels)
+  plot = df %>% 
+    ggplot(aes(x = x)) + 
+    geom_histogram(aes(fill = true_label), bins=100, color="black") +
+    ggtitle(glue("Mixture of Gaussians - sep = {sep}"))
+  print(plot)
+  
+  # sep_string = format(sep, nsmall = 1)
+  # save_name = glue("./data_inputs/gaussian_mixtures_1d-sep={sep_string}.jld")
+  # h5save(scaled_gaussian_data, file = save_name, name = "gaussian_data")
+}
+```
+
+```{r}
+for (sep in seps) {
+  mean_1 <- 0
+  mean_2 <- sep
+  means <- list(mean_1, mean_2)
+  sd = 1
+  
+  laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    laplace_data[i, ] <- rlaplace(1, location = means[[z_group]], scale = sd)
+    true_labels[i] <- z_group
+  }
+  
+  scaled_laplace_data = scale(laplace_data)
+  df = create_sim_df(scaled_laplace_data, true_labels)
+  plot = df %>% 
+    ggplot(aes(x = x)) + 
+    geom_density(aes(color = true_label)) +
+    ggtitle(glue("Mixture of Laplace - sep = {sep}"))
+  print(plot)
+  
+  sep_string = format(sep, nsmall = 1)
+  save_name = glue("./data_inputs/laplace_mixtures_1d-sep={sep_string}.jld")
+  h5save(scaled_laplace_data, file = save_name, name = "laplace_data")
+}
+```
+
+
+```{r}
+N = 10^6
+seps = c(15, 10000, 100000, 1000000)
+for (sep in seps) {
+  mean_1 <- 0
+  mean_2 <- sep
+  means <- list(mean_1, mean_2)
+
+  skew_norm_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    skew_norm_data[i, ] <- rsn(1, xi = means[[z_group]], omega = 1, alpha = 5, tau = 0)
+    true_labels[i] <- z_group
+  }
+  
+  scaled_skew_norm_data = scale(skew_norm_data)
+  df = create_sim_df(scaled_skew_norm_data, true_labels)
+  plot = df %>% 
+    ggplot(aes(x = x)) + 
+    geom_histogram(aes(fill = true_label), bins=100, color="black") +
+    ggtitle(glue("Mixture of Skew-Normal - sep = {sep}"))
+  print(plot)
+  
+  sep_string = format(sep, nsmall = 1)
+  save_name = glue("./data_inputs/skew_normal_mixtures_1d-sep={sep_string}.jld")
+  h5save(scaled_skew_norm_data, file = save_name, name = "skew_norm_data")
+}
+```
+
+```{r}
+N = 10^6
+seps = seq(1, 5, 0.5)
+
+for (sep in seps) {
+  mean_1 <- 0
+  mean_2 <- sep
+  means <- list(mean_1, mean_2)
+
+  t_data <- matrix(data = NA, nrow = N, ncol = DIMS)
+  true_labels <- rep(NA, N)
+  
+  for (i in 1:N) {
+    z_vec <- rmultinom(1, 1, w)
+    z_group <- which(z_vec == 1)
+    t_data[i, ] <- rt(1, ncp = means[[z_group]], df = 5)
+    true_labels[i] <- z_group
+  }
+  
+  scaled_t_data = scale(t_data)
+  df = create_sim_df(scaled_t_data, true_labels)
+  plot = df %>% 
+    ggplot(aes(x = x)) + 
+    geom_density(aes(color = true_label)) +
+    ggtitle(glue("Mixture of Student's t - sep = {sep}"))
+  print(plot)
+  
+  sep_string = format(sep, nsmall = 1)
+  save_name = glue("./data_inputs/t_mixtures_1d-sep={sep_string}.jld")
+  h5save(scaled_skew_norm_data, file = save_name, name = "t_data")
+}
+```
+
+
+```{r}
+library(ggpubr)
+
+K_0 = 2
+seps = seq(1, 5, 0.5)
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 10
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-1d_gaussian_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-1d_gaussian_mixtures.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Gaussian Mixtures - 2 components - n={n}")) +
+    scale_color_brewer()
+
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Gaussian Mixtures - 2 components - n={n}")) +
+    scale_color_brewer()
+  
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  ggsave(glue("./plot/pmf-1d-gaussian-mixtures-n={n}.pdf", plot=plot))
+}
+
+
+```
+
+
+```{r}
+library(ggpubr)
+
+K_0 = 2
+seps = c(seq(1, 5, 0.5), seq(6, 10, 1), 15, 25, 50, 100, 200, 1000, 2000, 5000, 10000, 100000, 1000000)
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 10
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+new_df = matrix(NA, nrow = length(seps), ncol = length(ns))
+
+plot_list = list()
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-1d_skew_norm_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "number of components k", breaks = 1:m) +
+    scale_y_continuous(name = "p(k|x)") +
+    ggtitle(glue("MFM - Skew Normal Mixtures - 2 components - n={n}")) +
+    scale_color_grey(start=0.9, end=0)
+  
+  plot_list[[i_n]] = mfm_pmf_plot
+  # plot_list = append(plot_list, )
+  print(mfm_pmf_plot)
+  ggsave(glue("./plot/pmf-1d-skew-norm-mixtures-n={n}.pdf", plot=plot))
+  map_k = apply(mfm_pmf, 2, which.max)
+  new_df[, i_n] = map_k
+}
+# plot_list[[1]]
+# ggarrange(plotlist=plot_list, nrow=2, ncol=4)
+```
+
+
+```{r}
+df = as.data.frame(cbind(log(seps), new_df))
+colnames(df) = c("separation", ns)
+long_new_df = melt(df,  id.vars = "separation", variable.name = "series")
+colnames(long_new_df) = c("separation", "samples", "map_k")
+  
+long_new_df %>%
+  ggplot(aes(x = separation, y = map_k)) +
+  geom_line(aes(colour = samples), linewidth = 1) +
+  geom_point(aes(color = samples)) +
+  scale_y_continuous(name = "posterior mode k", breaks = 1:10) +
+  scale_x_continuous(name = "log(separation)") +
+  ggtitle(glue("MFM - Skew Normal Mixtures - 2 components")) +
+  scale_color_brewer(palette = 5)
+ggsave("./plot/posterior_vs_separation_by_n_1d_skew_norm_mixtures.pdf")
+
+```
+
+```{r}
+K_0 = 2
+seps = seq(1, 5, 0.5)
+ns = c(100, 250, 500, 1000, 2500, 5000, 10000)
+m = 10
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-1d_laplace_mixtures.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-1d_laplace_mixtures.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Skew Normal Mixtures - 2 components - n={n}")) +
+    scale_color_brewer()
+
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Skew Normal Mixtures - 2 components - n={n}")) +
+    scale_color_brewer()
+  
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  ggsave(glue("./plot/pmf-1d-laplace-mixtures-n={n}.pdf", plot=plot))
+}
+```
+
+
+
+
+```{r}
+library(viridis)  # Load viridis for the viridis palette
+
+K_0 = 2
+seps = c(1, 2, 5, 10, 25, 50, 100, 200, 1000, 2000, 5000)
+ns = c(500)
+m = 10
+mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
+
+for (i_n in seq_along(ns)) {
+  n = ns[i_n]
+  
+  for (i_sep in seq_along(seps)) {
+    sep = seps[i_sep]
+    sep_string = format(sep, nsmall = 1)
+    k_posteriors = h5read(glue("./comp_outputs/local_k_posteriors-mvn-mfm-sep={sep_string}-n={n}-skew_normal_mixtures_1d.jld"), "k_posteriors")
+    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
+    
+    t_posteriors = h5read(glue("./comp_outputs/local_t_posteriors-mvn-dpm-sep={sep_string}-n={n}-skew_normal_mixtures_1d.jld"), "t_posteriors")
+    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
+  }
+  
+  df = as.data.frame(cbind(1:m, mfm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  
+  mfm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth = 1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("MFM - Skew Normal Mixtures - 2 components - n={n}")) +
+    scale_colour_grey(start = 0.8, end = 0)
+
+
+  df = as.data.frame(cbind(1:m, dpm_pmf))
+  colnames(df) = c("k", seps)
+  long_df = melt(df,  id.vars = "k", variable.name = "series")
+  colnames(long_df) = c("k", "separation", "pmf")
+  dpm_pmf_plot = long_df %>%
+    ggplot(aes(x = k, y = pmf)) +
+    geom_line(aes(colour = separation), linewidth=1) +
+    geom_point(aes(color = separation)) +
+    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
+    scale_x_continuous(name = "k", breaks = 1:m) +
+    ggtitle(glue("DPM - Skew Normal Mixtures - 2 components - n={n}")) +
+    scale_colour_grey(start = 0.8, end = 0)
+
+  plot = ggarrange(
+    mfm_pmf_plot,
+    dpm_pmf_plot,
+    ncol = 1
+  )
+  print(plot)
+  # ggsave(glue("./plot/pmf-1d-laplace-mixtures-n={n}.pdf", plot=plot))
+}
+```
+
+
+
+```{r}
+map_k = apply(mfm_pmf, 2, which.max)
+plot(log(seps, base=10), map_k)
+```

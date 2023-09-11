@@ -5,7 +5,7 @@ addprocs(10)
 @everywhere using JLD
 @everywhere using Dates
 
-ns = [100, 250, 500, 750, 1000] * 2
+ns = [1500, 2500, 5000] * 2
 n_sets = 50
 sets = 1:n_sets
 seps = 1:5

@@ -1,13 +1,13 @@
 ---
 title: "MLDS Research Project"
-subtitle: "Phase 1 - Base Cases"
+subtitle: "Coarsening Study"
 output:
   html_document:
     toc: true
     toc_depth: 2
     theme: united
     number_sections: true
-date: "5th July 2023"
+date: "4th Sept 2023"
 geometry: "left=1cm,right=1cm,top=1cm,bottom=2cm"
 author: "James Lee (CID: 01185042)"
 bibliography: ref.bib
@@ -16,12 +16,8 @@ bibliography: ref.bib
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
-```
-
-
-```{r}
 setwd("~/coding/mlds-final-project/Research/coarsening")
-source("../utils.R", local = knitr::knit_global())
+options(scipen = 999)
 ```
 
 Imports
@@ -35,177 +31,11 @@ library(reshape2)
 library(mvtnorm)
 library(LaplacesDemon)
 library(sn)
+library(COMIX)
+library(mcclust.ext)
 ```
 
-```{r}
-K_0 <- 2
-ns <- c(100, 250, 500, 1000, 2500, 5000, 10000)
-alphas <- c("10.0", "100.0", "1000.0", "10000.0", "100000.0", "1.0e6", "Inf")
-m <- 10
-pmf <- matrix(NA, nrow = m, ncol = length(ns))
-
-for (i_a in seq_along(alphas)) {
-    alpha <- alphas[i_a]
-    for (i_n in seq_along(ns)) {
-        n <- ns[i_n]
-        sep_string <- format(sep, nsmall = 1)
-        k_posteriors <- h5read(glue("./comp_outputs/k_posteriors-alpha={alpha}-n={n}-skew_norm_mixtures.jld"), "k_posteriors")
-        pmf[, i_n] <- rowMeans(k_posteriors[1:m, ])
-    }
-
-    df <- as.data.frame(cbind(1:m, pmf))
-    colnames(df) <- c("k", ns)
-    long_df <- melt(df, id.vars = "k", variable.name = "series")
-    colnames(long_df) <- c("k", "samples", "pmf")
-    pmf_plot <- long_df %>%
-        ggplot(aes(x = k, y = pmf)) +
-        geom_line(aes(colour = samples), linewidth = 1) +
-        geom_point(aes(colour = samples)) +
-        geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-        scale_x_continuous(name = "k", breaks = 1:m)
-    print(pmf_plot)
-}
-```
-
-```{r}
-K_0 <- 2
-ns <- c(100, 250, 500, 1000, 2500, 5000, 10000)
-alphas <- c("10.0", "100.0", "1000.0", "10000.0", "100000.0", "Inf")
-m <- 10
-pmf <- matrix(NA, nrow = m, ncol = length(ns))
-
-for (i_a in seq_along(alphas)) {
-    alpha <- alphas[i_a]
-    for (i_n in seq_along(ns)) {
-        n <- ns[i_n]
-        sep_string <- format(sep, nsmall = 1)
-        k_posteriors <- h5read(glue("./comp_outputs/skew_norm/1d/k_posteriors-single_skew_normal_1d-coarsen={alpha}-alpha=7-n={n}-set=1.jld"), "k_posteriors")
-        pmf[, i_n] <- rowMeans(k_posteriors[1:m, ])
-    }
-
-    df <- as.data.frame(cbind(1:m, pmf))
-    colnames(df) <- c("k", ns)
-    long_df <- melt(df, id.vars = "k", variable.name = "series")
-    colnames(long_df) <- c("k", "samples", "pmf")
-    pmf_plot <- long_df %>%
-        ggplot(aes(x = k, y = pmf)) +
-        geom_line(aes(colour = samples), linewidth = 1) +
-        geom_point(aes(colour = samples)) +
-        geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-        scale_x_continuous(name = "k", breaks = 1:m)
-    print(pmf_plot)
-}
-```
-
-
-
-
-
-```{r}
-K_0 <- 2
-ns <- c(100, 250, 500, 1000, 2500, 5000, 10000)
-alphas <- c("10.0", "100.0", "1000.0", "10000.0", "100000.0", "Inf")
-m <- 10
-pmf <- matrix(NA, nrow = m, ncol = length(ns))
-
-for (i_a in seq_along(alphas)) {
-    alpha <- alphas[i_a]
-    for (i_n in seq_along(ns)) {
-        n <- ns[i_n]
-        sep_string <- format(sep, nsmall = 1)
-        k_posteriors <- h5read(glue("./comp_outputs/k_posteriors-alpha={alpha}-n={n}-student_t_mixtures.jld"), "k_posteriors")
-        pmf[, i_n] <- rowMeans(k_posteriors[1:m, ])
-    }
-
-    df <- as.data.frame(cbind(1:m, pmf))
-    colnames(df) <- c("k", ns)
-    long_df <- melt(df, id.vars = "k", variable.name = "series")
-    colnames(long_df) <- c("k", "samples", "pmf")
-    pmf_plot <- long_df %>%
-        ggplot(aes(x = k, y = pmf)) +
-        geom_line(aes(colour = samples), linewidth = 1) +
-        geom_point(aes(colour = samples)) +
-        geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-        scale_x_continuous(name = "k", breaks = 1:m)
-    print(pmf_plot)
-}
-```
-```{r}
-K_0 <- 2
-ns <- c(100, 250, 500, 1000, 2500)
-alphas <- c("10.0", "100.0")
-seps <- seq(1, 5, 0.5)
-m <- 10
-pmf <- matrix(NA, nrow = m, ncol = length(seps))
-
-for (i_n in seq_along(ns)) {
-    n <- ns[i_n]
-    for (i_a in seq_along(alphas)) {
-        alpha <- alphas[i_a]
-        for (i_sep in seq_along(seps)) {
-            sep <- seps[i_sep]
-            sep_string <- format(sep, nsmall = 1)
-            k_posteriors <- h5read(glue("./comp_outputs/k_posteriors-alpha={alpha}-n={n}-sep={sep_string}-1d_skew_norm_mixtures.jld"), "k_posteriors")
-            pmf[, i_sep] <- rowMeans(k_posteriors[1:m, ])
-        }
-
-        df <- as.data.frame(cbind(1:m, pmf))
-        colnames(df) <- c("k", seps)
-        long_df <- melt(df, id.vars = "k", variable.name = "series")
-        colnames(long_df) <- c("k", "separation", "pmf")
-        title <- glue("1D Skew Norm Mixture - 2 components - alpha={alpha} - n={n}")
-        pmf_plot <- long_df %>%
-            ggplot(aes(x = k, y = pmf)) +
-            geom_line(aes(colour = separation), linewidth = 1) +
-            geom_point(aes(colour = separation)) +
-            geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-            scale_x_continuous(name = "k", breaks = 1:m) +
-            ggtitle(title)
-
-        print(pmf_plot)
-    }
-}
-```
-
-```{r}
-K_0 <- 2
-ns <- c(100, 250, 500, 1000, 2500, 5000, 10000)
-alphas <- c("10.0", "100.0", "1000.0", "10000.0", "Inf")
-seps <- seq(1, 5, 0.5)
-m <- 10
-pmf <- matrix(NA, nrow = m, ncol = length(seps))
-
-for (i_n in seq_along(ns)) {
-    n <- ns[i_n]
-    for (i_a in seq_along(alphas)) {
-        alpha <- alphas[i_a]
-        for (i_sep in seq_along(seps)) {
-            sep <- seps[i_sep]
-            sep_string <- format(sep, nsmall = 1)
-            k_posteriors <- h5read(glue("./comp_outputs/k_posteriors-alpha={alpha}-n={n}-sep={sep_string}-1d_laplace_mixtures.jld"), "k_posteriors")
-            pmf[, i_sep] <- rowMeans(k_posteriors[1:m, ])
-        }
-
-        df <- as.data.frame(cbind(1:m, pmf))
-        colnames(df) <- c("k", seps)
-        long_df <- melt(df, id.vars = "k", variable.name = "series")
-        colnames(long_df) <- c("k", "separation", "pmf")
-        title <- glue("1D Skew Norm Mixture - 2 components - alpha={alpha} - n={n}")
-        pmf_plot <- long_df %>%
-            ggplot(aes(x = k, y = pmf)) +
-            geom_line(aes(colour = separation), linewidth = 1) +
-            geom_point(aes(colour = separation)) +
-            geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-            scale_x_continuous(name = "k", breaks = 1:m) +
-            ggtitle(title)
-
-        print(pmf_plot)
-    }
-}
-```
-
-
-
+Skew Norm 1D
 ```{r}
 plot_avg_map_k <- function(coarsen, ns, m, K_0, dim) {
   pmf = matrix(NA, nrow = m, ncol = length(sets))
@@ -226,15 +56,6 @@ plot_avg_map_k <- function(coarsen, ns, m, K_0, dim) {
     long_df = melt(df,  id.vars = "k", variable.name = "series")
     colnames(long_df) = c("k", "set", "pmf")
   
-    pmf_plot = long_df %>%
-      ggplot(aes(x = k, y = pmf)) +
-      geom_line(aes(colour = set), linewidth = 1) +
-      geom_point(aes(color = set)) +
-      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-      scale_x_continuous(name = "k", breaks = 1:m) +
-      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
-      scale_color_grey(start = 0.7, end = 0)
-    # print(pmf_plot)
     map_k = apply(pmf, 2, which.max)
     avg_map_k[i_n] = mean(map_k)
   }
@@ -245,35 +66,28 @@ sets = 1:50
 ns = c(100, 250, 500, 750, 1000, 1500, 2500)
 m = 10
 K_0 = 1
-coarsen = c(10, 50, 70, 80, 100, 1000)
-# alphas = c(2, 5, 10, 50, 1000)
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(10, ns, m, K_0, 1),
-    plot_avg_map_k(50, ns, m, K_0, 1),
-    plot_avg_map_k(70, ns, m, K_0, 1),
-    plot_avg_map_k(80, ns, m, K_0, 1),
-    plot_avg_map_k(100, ns, m, K_0, 1),
-    plot_avg_map_k(1000, ns, m, K_0, 1)
-  )
-)
-colnames(df) <- c("n", coarsen)
-long_df = melt(df,  id.vars = "n", variable.name = "coarsen")
-colnames(long_df) = c("n", "coarsen", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = n, y = avg_map_k)) +
-  geom_line(aes(colour = coarsen), linewidth = 1) +
-  geom_point(aes(color = coarsen)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
+coarsen = c(10^10, 1000, 100, 70, 80, 50, 10)
+dim = 1
+
+mean_df = as.data.frame(ns)
+for (c in coarsen) {
+  mean_df = cbind(mean_df, plot_avg_map_k(c, ns, m, K_0, dim))
+}
+colnames(mean_df) <- c("n", coarsen)
+long_df = melt(mean_df,  id.vars = "n", variable.name = "coarsen")
+colnames(long_df) = c("n", "eta", "avg_map_k")
+p = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = eta), linewidth = 1) +
+  geom_point(aes(color = eta)) +
+  scale_x_continuous(name = "log(n)") + 
+  scale_y_continuous("Avg. MAP number of components", breaks = 0:5, limits = c(0, 5))
+print(p)
 ```
 
 
 ```{r}
-
-plot_avg_map_k <- function(coarsen, ns, m, K_0, dim) {
+plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
   pmf = matrix(NA, nrow = m, ncol = length(sets))
   avg_map_k = rep(NA, length(ns))
   
@@ -282,59 +96,195 @@ plot_avg_map_k <- function(coarsen, ns, m, K_0, dim) {
     
     for (i_set in seq_along(sets)) {
       set = sets[i_set]
-      filename = glue("./comp_outputs/student_t/{dim}d/k_posterior-single_t_{dim}d-coarsen={coarsen}-dof=2-n={n}-set-{set}.jld")
+      filename = glue("../single_component/comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
       k_posterior = h5read(filename, "k_posterior")
       pmf[, i_set] = k_posterior[1:m]
     }
-    
-    df = as.data.frame(cbind(1:m, pmf))
-    colnames(df) = c("k", sets)
-    long_df = melt(df,  id.vars = "k", variable.name = "series")
-    colnames(long_df) = c("k", "set", "pmf")
-  
-    pmf_plot = long_df %>%
-      ggplot(aes(x = k, y = pmf)) +
-      geom_line(aes(colour = set), linewidth = 1) +
-      geom_point(aes(color = set)) +
-      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-      scale_x_continuous(name = "k", breaks = 1:m) +
-      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
-      scale_color_grey(start = 0.7, end = 0)
-    # print(pmf_plot)
     map_k = apply(pmf, 2, which.max)
     avg_map_k[i_n] = mean(map_k)
   }
   return(avg_map_k)
 }
 
-sets = 1:50
-ns = c(100, 250, 500, 750, 1000)
-m = 10
-K_0 = 1
-coarsen = c(10, 50, 70, 80, 100, 1000)
-# alphas = c(2, 5, 10, 50, 1000)
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(10, ns, m, K_0, 1),
-    plot_avg_map_k(50, ns, m, K_0, 1),
-    plot_avg_map_k(70, ns, m, K_0, 1),
-    plot_avg_map_k(80, ns, m, K_0, 1),
-    plot_avg_map_k(100, ns, m, K_0, 1),
-    plot_avg_map_k(1000, ns, m, K_0, 1)
-  )
+single_df = as.data.frame(cbind(
+  ns,
+  plot_avg_map_k(7, ns, m, K_0, 1)
+))
+colnames(single_df) <- c("n", "single")
+p2 = p + 
+  geom_line(data = single_df, aes(x = log(n), y = single), color = "black", linewidth = 1.5, linetype = "dotted") +
+  annotate("text", x = 7, y = 4, label = "base MFM") +
+  ggtitle("Average MAP estimate of number of components vs. sample size (with coarsening)") +
+  geom_hline(yintercept = 1, linetype = 'dotted', col = 'blue') +
+  theme(text = element_text(size = 16))
+print(p2)
+ggsave(
+  "./plots/single-skew-norm-1d-coarsen-results.pdf",
+  p2,
+  width=12,
+  height=5,
+  units="in",
+  dpi=600,
+  device="pdf"
 )
-colnames(df) <- c("n", coarsen)
-long_df = melt(df,  id.vars = "n", variable.name = "coarsen")
-colnames(long_df) = c("n", "coarsen", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = n, y = avg_map_k)) +
-  geom_line(aes(colour = coarsen), linewidth = 1) +
-  geom_point(aes(color = coarsen)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
 ```
 
+```{r}
+eta = c(10^10, 1000, 100, 80, 70, 50, 10)
+n = c(100, 250, 500, 750, 1000, 1500, 2500)
+df = crossing(eta, n)
+df$zeta = df$eta / (df$n + df$eta)
+df$eta = as.factor(df$eta)
+p = df %>% ggplot(aes(x = log(n), y = zeta)) +
+  geom_line(aes(color = eta)) +
+  geom_point(aes(color = eta)) +
+  scale_y_continuous("zeta_n", breaks = seq(0, 1, 0.25), limits = c(0, 1)) +
+  scale_x_continuous("log(n)") +
+  ggtitle("Plot of zeta_n against log(n)") +
+  theme(text = element_text(size = 16))
+print(p)
+ggsave(
+  "./plots/zeta_n_against_n.pdf", 
+  p,
+  width=10,
+  height=5,
+  units="in",
+  dpi=600,
+  device="pdf"
+)
+```
 
+2D case
+Using COMIX on $t$-distributed data
+```{r}
+ns = c(100, 500, 1000)
+dof = 2
+zetas = c(0.01, 0.99)
+set = 1
+
+mcmc_its = 1 * 10^5
+mcmc_burn = 5 * 10^4
+mcmc_keep = mcmc_its - mcmc_burn
+
+run_comix = function(set) {
+  input_file_name = glue("../single_component/data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+  full_data = h5read(input_file_name, "data")
+  
+  for (n in ns) {
+    df = as.data.frame(full_data[1:n, ])
+    labels = rep(1, n)
+    df = cbind(df, labels)
+    colnames(df) = c("x", "y", "labels")
+    
+    Y = cbind(df$x, df$y)
+    C = df$labels
+    pmc = list("nburn" = mcmc_burn, "nsave" = mcmc_keep, "ndisplay" = 1000)
+    
+    for (zeta in zetas) {
+      prior = list("zeta" = zeta)
+      results = comix(Y, C, prior = prior, pmc = pmc, ncores = 12)
+      
+      t_draws = results$chain$t
+      
+      psm = comp.psm(t_draws)
+      min_vi = minVI(
+        psm,
+        t_draws,
+        method = "draws",
+        include.greedy = FALSE
+      )
+      best_vi = min_vi$cl
+      df = as.data.frame(cbind(Y, best_vi))
+      colnames(df) = c("x", "y", "z")
+      save_file = glue("./comp_outputs/student_t/2d/summary-single_t_2d-zeta={zeta}-dof={dof}-n={n}-set-{set}.csv")
+      # save as csv
+      write.csv(df, file = save_file)
+    }
+  }
+}
+
+run_comix(set)
+```
+
+```{r}
+set = 1
+dof = 2
+ns = c(100, 500, 1000)
+zetas = c(0.01, 0.99)
+
+for (zeta in zetas) {
+  for (n in ns) {
+    save_file = glue("./comp_outputs/student_t/2d/summary-single_t_2d-zeta={zeta}-dof={dof}-n={n}-set-{set}.csv")
+    df = read.csv(save_file)
+    df$z = as.factor(as.numeric(as.factor(df$z)))
+    summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+      geom_point(aes(color = z), size = 2) +
+      scale_color_discrete() +
+      ggtitle(glue("Summary Clustering (Best VILB posterior sample) - n={n} - zeta={zeta}")) +
+      theme(text = element_text(size = 16))
+    print(summary_clustering_plot)
+    ggsave(
+      glue("./plots/summary-single-t-2d-coarsen-zeta={zeta}-n={n}.pdf"),
+      summary_clustering_plot,
+      width=10,
+      height=10,
+      units="in",
+      dpi=600,
+      device="pdf"
+    )
+  }
+}
+```
+
+Check convergence COMIX
+```{r}
+n = 1000
+dof = 2
+zeta = 0.01
+
+set = 1
+mcmc_its = 1 * 10^5
+mcmc_burn = 5 * 10^4
+mcmc_keep = mcmc_its - mcmc_burn
+
+input_file_name = glue("../single_component/data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
+full_data = h5read(input_file_name, "data")
+df = as.data.frame(full_data[1:n, ])
+labels = rep(1, n)
+df = cbind(df, labels)
+colnames(df) = c("x", "y", "labels")
+Y = cbind(df$x, df$y)
+C = df$labels
+pmc = list("nburn" = 0, "nsave" = mcmc_its, "ndisplay" = 10000)
+prior = list("zeta" = zeta, "merge_step" = FALSE)
+results = comix(Y, C, prior = prior, pmc = pmc, ncores = 12)
+t_draws = results$chain$t
+tt_draws = rep(NA, length(mcmc_its))
+for (it in 1:mcmc_its) {
+  tt_draws[it] = length(unique(t_draws[it,]))
+}
+df = as.data.frame(cbind(1:mcmc_its, tt_draws))
+df$class = as.factor(c(rep("burn", mcmc_burn), rep("keep", mcmc_keep)))
+colnames(df) = c("iter", "t", "class")
+p = df %>% 
+  mutate(rec = 1) %>% 
+  mutate(rollavg = cumsum(t)/cumsum(rec)) %>% 
+  select(-rec) %>%
+  ggplot() + 
+  geom_point(aes(x = iter, y = rollavg, color=class), size = 0.5) +
+  scale_y_continuous("Avg. posterior number of clusters") +
+  scale_x_continuous("Iteration") +
+  ggtitle("Running posterior average number of clusters") +
+  theme(text = element_text(size = 14))
+print(p)
+ggsave(
+  "./plots/comix_convergence.pdf", 
+  p,
+  width=10,
+  height=5,
+  units="in",
+  dpi=600,
+  device="pdf"
+)
+```
 

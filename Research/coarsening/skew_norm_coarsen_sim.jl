@@ -11,7 +11,7 @@ addprocs(10)
 ns = [5000, 7500, 10000]::Array{Int}
 n_sets = 50
 sets = 1:n_sets
-alphas = [10, 50, 70, 80, 100, 1000]::Array{Int}
+alphas = [10^10]::Array{Int}
 
 @everywhere function histogram(x, edges=[]; n_bins=50, weights=ones(length(x)))
     if isempty(edges)
@@ -64,26 +64,21 @@ end
         for n in ns
             save_fullpath = "./comp_outputs/skew_norm/1d/k_posterior-single_skew_normal_1d-coarsen=$alpha-alpha=7-n=$n-set-$set.jld"
 
-            if !isfile(save_fullpath)
+            data = [all_data[j]::Float64 for j in 1:n]
+            zeta = (1 / n) / ((1 / n) + (1 / alpha))
+            println(Dates.now())
+            println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
 
-                data = [all_data[j]::Float64 for j in 1:n]
-                zeta = (1 / n) / ((1 / n) + (1 / alpha))
-                println(Dates.now())
-                println("n = $n, set = $set, alpha = $alpha, zeta=$zeta")
+            # Run sampler
+            mcmc_its = 10^5
+            mcmc_burn = 5 * 10^4
+            t_max = 10
+            k_posterior = run_simulation(
+                data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
+            )
 
-                # Run sampler
-                mcmc_its = 10^5
-                mcmc_burn = 5 * 10^4
-                t_max = 10
-                k_posterior, z_r = run_simulation(
-                    data, mcmc_its, mcmc_burn, t_max, c, sigma, zeta
-                )
-
-                save(save_fullpath, "k_posterior", k_posterior)
-                println(Dates.now())
-            else
-                println("File exists, skipping")
-            end
+            save(save_fullpath, "k_posterior", k_posterior)
+            println(Dates.now())
         end
     end
 end

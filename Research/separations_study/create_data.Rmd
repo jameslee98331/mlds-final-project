@@ -1,6 +1,6 @@
 ---
 title: "MLDS Research Project"
-subtitle: "Phase 1 - Base Cases"
+subtitle: "Two Components Study"
 output:
   html_document:
     toc: true
@@ -16,12 +16,7 @@ bibliography: ref.bib
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
-```
-
-
-```{r}
 setwd("~/coding/mlds-final-project/Research/separations_study/")
-source("../utils.R", local = knitr::knit_global())
 ```
 
 Imports
@@ -35,303 +30,7 @@ library(reshape2)
 library(mvtnorm)
 library(LaplacesDemon)
 library(sn)
-```
-
-# Create Gaussian mixture datasets with inreasing separation between components
-```{r}
-set.seed(0)
-
-# True number of components
-K_0 <- 2
-N <- 10^4
-DIMS <- 2
-ALPHA <- 5
-
-
-alphas <- rep((ALPHA / K_0), K_0)
-w <- rdirichlet(n = 1, alpha = alphas)
-print("Component weights")
-print(w)
-
-seps = seq(1, 5, 0.1)
-for (sep in seps) {
-  mean_1 <- runif(2)
-  theta = runif(1, min = 0, max = 2 * pi)
-  mean_2 <- c(mean_1[1] + sep * cos(theta), mean_1[2] + sep * sin(theta))
-  means <- list(mean_1, mean_2)
-  cov <- diag(DIMS) * 0.05
-  
-  gaussian_data <- matrix(data = NA, nrow = N, ncol = DIMS)
-  true_labels <- rep(NA, N)
-  for (i in 1:N) {
-    z_vec <- rmultinom(1, 1, w)
-    z_group <- which(z_vec == 1)
-    gaussian_data[i, ] <- rmvnorm(1, mean = means[[z_group]], sigma = cov)
-    true_labels[i] <- z_group
-  }
-  
-  scaled_gaussian_data = scale(gaussian_data)
-  gaussian_df <- create_sim_df(scaled_gaussian_data, true_labels)
-  p1 = plot_generated_data(gaussian_df, "Gaussian")
-  print(p1)
-  
-  sep_string = format(sep, nsmall = 1)
-  save_name = glue("./data_inputs/gaussian_mixtures-sep={sep_string}.jld")
-  h5save(scaled_gaussian_data, file = save_name, name = "gaussian_data")
-}
-
-```
-
-## Multivariate laplace
-
-using the same mean and covariance definitions
-
-```{r}
-for (sep in seps) {
-  mean_1 <- runif(2)
-  theta = runif(1, min = 0, max = 2 * pi)
-  mean_2 <- c(mean_1[1] + sep * cos(theta), mean_1[2] + sep * sin(theta))
-  means <- list(mean_1, mean_2)
-  cov <- diag(DIMS) * 0.05
-
-  laplace_data <- matrix(data = NA, nrow = N, ncol = DIMS)
-  true_labels <- rep(NA, N)
-  
-  for (i in 1:N) {
-    z_vec <- rmultinom(1, 1, w)
-    z_group <- which(z_vec == 1)
-    laplace_data[i, ] <- rmvl(1, mu = means[[z_group]], Sigma = cov)
-    true_labels[i] <- z_group
-  }
-
-  scaled_laplace_data = scale(laplace_data)
-  laplace_df <- create_sim_df(scaled_laplace_data, true_labels)
-  p1 = plot_generated_data(laplace_df, "Laplace")
-  print(p1)
-  
-  sep_string = format(sep, nsmall = 1)
-  save_name = glue("./data_inputs/laplace_mixtures-sep={sep_string}.jld")
-  h5save(scaled_laplace_data, file = save_name, name = "laplace_data")
-}
-```
-
-## Skew-normal distribution
-```{r}
-omega <- matrix(c(0.1, 0, 0, 0.7), nrow = DIMS, byrow = TRUE)
-SN_ALPHA <- c(1, 3)
-TAU <- 1
-
-# Pre-allocate arrays
-skew_norm_data <- matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels <- rep(NA, N)
-
-for (i in 1:N) {
-  z_vec <- rmultinom(1, 1, w)
-  z_group <- which(z_vec == 1)
-  skew_norm_data[i, ] <- rmsn(
-    n = 1,
-    xi = means[[z_group]],
-    Omega = omega,
-    alpha = SN_ALPHA,
-    tau = TAU
-  )
-  true_labels[i] <- z_group
-}
-skew_norm_df <- create_sim_df(skew_norm_data, true_labels)
-plot_generated_data(skew_norm_df, "Skew Normals")
-
-h5save(skew_norm_data, file="../data/skew_norm_data.jld", name="skew_norm_data")
-```
-
-## Student's t
-```{r}
-student_t_data <- matrix(data = NA, nrow = N, ncol = DIMS)
-true_labels <- rep(NA, N)
-
-for (i in 1:N) {
-  z_vec <- rmultinom(1, 1, w)
-  z_group <- which(z_vec == 1)
-  student_t_data[i, ] <- rmvt(1, mu = means[[z_group]], S = cov, df = 3)
-  true_labels[i] <- z_group
-}
-
-student_t_df <- create_sim_df(student_t_data, true_labels)
-plot_generated_data(student_t_df, "Student's t")
-
-h5save(student_t_data, file="../data/student_t_data.jld", name="student_t_data")
-```
-
-## Analysis
-
-```{r}
-library(ggpubr)
-
-K_0 = 2
-seps = seq(1, 5, 0.5)
-ns = c(100, 250, 500, 1000)
-m = 30
-mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-
-for (i_n in seq_along(ns)) {
-  n = ns[i_n]
-  
-  for (i_sep in seq_along(seps)) {
-    sep = seps[i_sep]
-    sep_string = format(sep, nsmall = 1)
-    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "k_posteriors")
-    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
-    
-    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "t_posteriors")
-    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
-  }
-  
-  df = as.data.frame(cbind(1:m, mfm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  
-  mfm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth = 1) +
-    geom_point(aes(color = separation)) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("MFM - Gaussian Mixtures - 2 component - n={n}"))
-
-  df = as.data.frame(cbind(1:m, dpm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  dpm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth=1) +
-    geom_point(aes(color = separation)) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("DPM - Gaussian Mixtures - 2 component - n={n}"))
-  
-  plot = ggarrange(
-    mfm_pmf_plot,
-    dpm_pmf_plot,
-    ncol = 1
-  )
-  print(plot)
-  ggsave(glue("./plot/pmf-gaussian-mixtures-n={n}.pdf", plot=plot))
-}
-```
-
-
-```{r}
-K_0 = 2
-seps = c(2.5)
-ns = c(250)
-m = 30
-mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-
-for (i_n in seq_along(ns)) {
-  n = ns[i_n]
-  
-  for (i_sep in seq_along(seps)) {
-    sep = seps[i_sep]
-    sep_string = format(sep, nsmall = 1)
-    k_posteriors = h5read(glue("./comp_outputs/local_k_posteriors-mvn-mfm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "k_posteriors")
-    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
-    
-    t_posteriors = h5read(glue("./comp_outputs/local_t_posteriors-mvn-dpm-sep={sep_string}-n={n}-gaussian_mixtures.jld"), "t_posteriors")
-    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
-  }
-  
-  df = as.data.frame(cbind(1:m, mfm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  
-  mfm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth = 1) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("MFM - Gaussian Mixtures - 2 component - n={n}"))
-
-  df = as.data.frame(cbind(1:m, dpm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  dpm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth=1) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("DPM - Gaussian Mixtures - 2 component - n={n}"))
-  
-  plot = ggarrange(
-    mfm_pmf_plot,
-    dpm_pmf_plot,
-    ncol = 1
-  )
-  print(plot)
-  # ggsave(glue("./plot/pmf-gaussian-mixtures-n={n}.pdf", plot=plot))
-}
-```
-
-```{r}
-
-K_0 = 2
-seps = seq(1, 5, 0.5)
-ns = c(100, 250)
-m = 30
-mfm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-dpm_pmf = matrix(NA, nrow = m, ncol = length(seps))
-
-for (i_n in seq_along(ns)) {
-  n = ns[i_n]
-  
-  for (i_sep in seq_along(seps)) {
-    sep = seps[i_sep]
-    sep_string = format(sep, nsmall = 1)
-    k_posteriors = h5read(glue("./comp_outputs/k_posteriors-mvn-mfm-sep={sep_string}-n={n}-laplace_mixtures.jld"), "k_posteriors")
-    mfm_pmf[, i_sep] = rowMeans(k_posteriors[1:m, ])
-    
-    t_posteriors = h5read(glue("./comp_outputs/t_posteriors-mvn-dpm-sep={sep_string}-n={n}-laplace_mixtures.jld"), "t_posteriors")
-    dpm_pmf[, i_sep] = rowMeans(t_posteriors[1:m, ])
-  }
-  
-  df = as.data.frame(cbind(1:m, mfm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  
-  mfm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth = 1) +
-    geom_point(aes(color = separation)) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("MFM - Laplace Mixtures - 2 component - n={n}"))
-
-  df = as.data.frame(cbind(1:m, dpm_pmf))
-  colnames(df) = c("k", seps)
-  long_df = melt(df,  id.vars = "k", variable.name = "series")
-  colnames(long_df) = c("k", "separation", "pmf")
-  dpm_pmf_plot = long_df %>%
-    ggplot(aes(x = k, y = pmf)) +
-    geom_line(aes(colour = separation), linewidth=1) +
-    geom_point(aes(color = separation)) +
-    geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-    scale_x_continuous(name = "k", breaks = 1:m) +
-    ggtitle(glue("DPM - Laplace Mixtures - 2 component - n={n}"))
-  
-  plot = ggarrange(
-    mfm_pmf_plot,
-    dpm_pmf_plot,
-    ncol = 1
-  )
-  print(plot)
-  ggsave(glue("./plot/pmf-laplace-mixtures-n={n}.pdf", plot=plot))
-}
-
+library(mcclust.ext)
 ```
 
 # Create 2D 2 component skew normal mixtures with varying separation
@@ -364,139 +63,30 @@ for (sep in seps) {
   df = as.data.frame(all_data)
   colnames(df) = c("x", "y")
   p = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(size = 0.1) +
-    ggtitle(glue("2 Component Skew Normal set-{set} - sep={sep}"))
+    geom_point(size = 0.1)
+    # ggtitle(glue("2 Component Skew Normal set-{set} - sep={sep}"))
   print(p)
+  ggsave(glue("./plot/two_skew_norm_2d_example-orient=1-alpha=7-sep={sep}.pdf"), p, width=5, height=5, units="in", dpi=600, device="pdf")
 }
 
-```
-
-```{r}
-set.seed(0)
-
-# True number of components
-sets = 1:50
-Omega = matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
-
-seps = seq(1, 5, 1)
-for (sep in seps) {
-  xi_1 <- c(0, 0)
-  xi_2 = c(sep/sqrt(2), sep/sqrt(2))
-
-  for (set in sets) {
-    data_1 = rmsn(n = 10^4, xi = xi_1, Omega = Omega, alpha = c(7, 7))
-    data_2 = rmsn(n = 10^4, xi = xi_2, Omega = Omega, alpha = c(-7, -7))
-    data = rbind(data_1, data_2)
-    data =  data[sample(1:nrow(data)), ]
-    save_name = glue("./data_inputs/skew_norm/2d/skew_normal_2d-alpha=7-sep={sep}-orient=2-set-{set}.jld")
-    # h5save(data, file = save_name, name = "data")
-  }
-}
-
-set = 1
-for (sep in seps) {
-  read_name = glue("./data_inputs/skew_norm/2d/skew_normal_2d-alpha=7-sep={sep}-orient=2-set-{set}.jld")
-  all_data = h5read(read_name, "data")
-  df = as.data.frame(all_data)
-  colnames(df) = c("x", "y")
-  p = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(size = 0.1) +
-    ggtitle(glue("2 Component Skew Normal set-{set} - sep={sep}"))
-  print(p)
-}
-
-```
-
-
-```{r}
-set.seed(0)
-
-# True number of components
-sets = 1:50
-Omega = matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
-
-seps = seq(1, 5, 1)
-for (sep in seps) {
-  xi_1 <- c(0, 0)
-  xi_2 = c(-sep/sqrt(2), -sep/sqrt(2))
-
-  for (set in sets) {
-    data_1 = rmsn(n = 10^4, xi = xi_1, Omega = Omega, alpha = c(7, 7))
-    data_2 = rmsn(n = 10^4, xi = xi_2, Omega = Omega, alpha = c(-7, -7))
-    data = rbind(data_1, data_2)
-    data =  data[sample(1:nrow(data)), ]
-    save_name = glue("./data_inputs/skew_norm/2d/skew_normal_2d-alpha=7-sep={sep}-orient=3-set-{set}.jld")
-    # h5save(data, file = save_name, name = "data")
-  }
-}
-
-set = 1
-for (sep in seps) {
-  read_name = glue("./data_inputs/skew_norm/2d/skew_normal_2d-alpha=7-sep={sep}-orient=3-set-{set}.jld")
-  all_data = h5read(read_name, "data")
-  df = as.data.frame(all_data)
-  colnames(df) = c("x", "y")
-  p = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(size = 0.1) +
-    ggtitle(glue("2 Component Skew Normal set-{set} - sep={sep}"))
-  print(p)
-}
-
-```
-
-```{r}
-
-loc = c(0, 0)
-scale = matrix(c(1, 0, 0, 1), nrow = 2)
-dofs = c(2, 5, 10, 50, 1000)
-
-for (dof in dofs) {
-  for (set in 1:50) {
-    data = rmt(n = 10000, mean = loc, S = scale, df = dof)
-    save_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
-    # h5save(data, file = save_name, name = "data")
-  }
-}
-
-set = 1
-for (dof in dofs) {
-  read_name = glue("./data_inputs/student_t/2d/single_t_2d-dof={dof}-set-{set}.jld")
-  
-  df = as.data.frame(h5read(read_name, "data"))
-  colnames(df) = c("x", "y")
-  p = df %>% ggplot(aes(x = x, y = y)) +
-    geom_point(size = 0.1, color = "#619CFF") + 
-    theme(plot.title = element_text(size = 10))
-  print(p)
-  ggsave(
-    glue("./plots/single_t_2d-dof={dof}_examples.pdf"),
-    p,
-    width = 5,
-    height = 5,
-    dpi = 600,
-    units = "in",
-    device = "pdf"
-  )
-}
 ```
 
 # Results
-
 ```{r}
 plot_avg_map_k <- function(sep, ns, m, K_0, dim) {
   pmf = matrix(NA, nrow = m, ncol = length(sets))
   avg_map_k = rep(NA, length(ns))
-  
+
   for (i_n in seq_along(ns)) {
     n = ns[i_n]
     
     for (i_set in seq_along(sets)) {
       set = sets[i_set]
-      filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-skew_normal_{dim}d-alpha=7-sep={sep}-n={n}-orient=3-set-{set}.jld")
+      filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-skew_normal_{dim}d-alpha=7-sep={sep}-n={n}-orient=1-set-{set}.jld")
       k_posterior = h5read(filename, "k_posterior")
       pmf[, i_set] = k_posterior[1:m]
     }
-    
+
     df = as.data.frame(cbind(1:m, pmf))
     colnames(df) = c("k", sets)
     long_df = melt(df,  id.vars = "k", variable.name = "series")
@@ -518,95 +108,32 @@ plot_avg_map_k <- function(sep, ns, m, K_0, dim) {
 }
 
 sets = 1:50
-ns = c(200, 500, 1000, 1500, 2000)
+ns = c(100, 250, 500, 750, 1000, 1500, 2500, 5000)
 m = 10
 K_0 = 2
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(1, ns, m, K_0, 2),
-    plot_avg_map_k(2, ns, m, K_0, 2),
-    plot_avg_map_k(3, ns, m, K_0, 2),
-    plot_avg_map_k(4, ns, m, K_0, 2),
-    plot_avg_map_k(5, ns, m, K_0, 2)
-  )
-)
-seps = c(1, 2, 3, 4, 5)
-colnames(df) <- c("n", seps)
-long_df = melt(df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "separation", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = log(n), y = avg_map_k)) +
-  geom_line(aes(colour = separation), linewidth = 1) +
-  geom_point(aes(color = separation)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
-```
+seps = c(5, 4, 3, 2, 1)
+dims = 2
+df = as.data.frame(ns)
 
-
-```{r}
-plot_avg_map_k <- function(sep, ns, m, K_0, dim) {
-  pmf = matrix(NA, nrow = m, ncol = length(sets))
-  avg_map_k = rep(NA, length(ns))
-  
-  for (i_n in seq_along(ns)) {
-    n = ns[i_n]
-    
-    for (i_set in seq_along(sets)) {
-      set = sets[i_set]
-      filename = glue("./comp_outputs/skew_norm/{dim}d/k_posterior-skew_normal_{dim}d-alpha=7-sep={sep}-n={n}-set-{set}.jld")
-      k_posterior = h5read(filename, "k_posterior")
-      pmf[, i_set] = k_posterior[1:m]
-    }
-    
-    df = as.data.frame(cbind(1:m, pmf))
-    colnames(df) = c("k", sets)
-    long_df = melt(df,  id.vars = "k", variable.name = "series")
-    colnames(long_df) = c("k", "set", "pmf")
-  
-    pmf_plot = long_df %>%
-      ggplot(aes(x = k, y = pmf)) +
-      geom_line(aes(colour = set), linewidth = 1) +
-      geom_point(aes(color = set)) +
-      geom_vline(xintercept = K_0, linetype = "dotted", linewidth = 1.5) +
-      scale_x_continuous(name = "k", breaks = 1:m) +
-      ggtitle(glue("MFM - 1D Laplace - 1 component - n={n}")) +
-      scale_color_grey(start = 0.7, end = 0)
-    # print(pmf_plot)
-    map_k = apply(pmf, 2, which.max)
-    avg_map_k[i_n] = mean(map_k)
-  }
-  return(avg_map_k)
+for (sep in seps) {
+  df = cbind(df, plot_avg_map_k(sep, ns * 2, m, K_0, dims))
 }
-
-sets = 1:50
-ns = c(200, 500, 1000, 1500, 2000)
-m = 10
-K_0 = 2
-df = as.data.frame(
-  cbind(
-    ns,
-    plot_avg_map_k(1, ns, m, K_0, 2),
-    plot_avg_map_k(2, ns, m, K_0, 2),
-    plot_avg_map_k(3, ns, m, K_0, 2),
-    plot_avg_map_k(4, ns, m, K_0, 2),
-    plot_avg_map_k(5, ns, m, K_0, 2)
-  )
-)
-seps = c(1, 2, 3, 4, 5)
 colnames(df) <- c("n", seps)
-long_df = melt(df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "separation", "avg_map_k")
-pmf_plot = long_df %>%
-  ggplot(aes(x = log(n), y = avg_map_k)) +
-  geom_line(aes(colour = separation), linewidth = 1) +
-  geom_point(aes(color = separation)) +
-  scale_x_continuous(name = "n") +
-  scale_color_grey(start=0.7, end=0)
-print(pmf_plot)
-```
 
+long_df = melt(df,  id.vars = "n", variable.name = "alpha")
+colnames(long_df) = c("n", "tau", "avg_map_k")
+
+p1 = long_df %>%
+  ggplot(aes(x = log(n), y = avg_map_k)) +
+  geom_line(aes(colour = tau), linewidth = 1) +
+  geom_point(aes(color = tau)) +
+  scale_y_continuous("Average MAP number of components", 1:10) +
+  scale_x_continuous("log(n)") +
+  ggtitle("Average MAP number of components vs. sample size (coloured by separation)")
+print(p1)
+ggsave(glue("./plot/two_skew_norm_2d_results-orient=1-alpha=7.pdf"), p1, width=10, height=5, units="in", dpi=600, device="pdf")
+
+```
 
 ```{r}
 plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
@@ -615,7 +142,7 @@ plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
   
   for (i_n in seq_along(ns)) {
     n = ns[i_n]
-    
+
     for (i_set in seq_along(sets)) {
       set = sets[i_set]
       filename = glue("../single_component/comp_outputs/skew_norm/{dim}d/k_posterior-single_skew_normal_{dim}d-alpha={alpha}-n={n}-set-{set}.jld")
@@ -628,29 +155,99 @@ plot_avg_map_k <- function(alpha, ns, m, K_0, dim) {
   return(avg_map_k)
 }
 
-
-
-ns = c(100, 250, 500, 750, 1000)
-full_df = cbind(
-  df,
+single2_df = as.data.frame(cbind(
+  ns,
   plot_avg_map_k(7, ns, m, K_0, 2) * 2
+))
+colnames(single2_df) <- c("n", "single2")
+single_df = as.data.frame(cbind(
+  ns,
+  plot_avg_map_k(7, ns, m, K_0, 2)
+))
+colnames(single_df) <- c("n", "single")
+
+p2 = p1 + 
+  geom_line(data = single2_df, aes(x = log(n), y = single2), color = "black", linewidth = 1.5, linetype = "dashed") +
+  geom_line(data = single_df, aes(x = log(n), y = single), color = "black", linewidth = 1.5, linetype = "dotted") +
+  annotate("text", x = 7.8, y = 4, label = "single component") +
+  annotate("text", x = 7.5, y = 10, label = "2 x single component") +
+  ggtitle("Average MAP number of components vs. sample size (coloured by separation) + single comp results") +
+  geom_hline(yintercept = 2, linetype = 'dotted', col = 'blue')
+
+print(p2)
+ggsave(
+  glue("./plot/two_skew_norm_2d_results_with_single_comp_results-orient=1-alpha=7.pdf"), 
+  p2, 
+  width = 10, 
+  height = 5, 
+  units = "in", 
+  dpi = 600,
+  device = "pdf"
 )
-full_df
-
-seps = c(1, 2, 3, 4, 5)
-colnames(full_df) <- c("n", seps, "single")
-
-long_df = melt(full_df,  id.vars = "n", variable.name = "alpha")
-colnames(long_df) = c("n", "alpha", "avg_map_k")
-pmf_plot_2d = long_df %>%
-  ggplot(aes(x = log(n), y = avg_map_k)) +
-  geom_line(aes(colour = alpha), linewidth = 1) +
-  geom_point(aes(color = alpha)) +
-  scale_color_grey(start = 0.7, end = 0) +
-  scale_x_continuous(name = "log(n)") +
-  scale_y_continuous("Mean MAP-k", 1:8) +
-  ggtitle("2D")
-
-print(pmf_plot_2d)
 ```
 
+
+# Orientation 1
+```{r}
+mcmc_its = 100000
+mcmc_burn = 50000
+set = 8
+alpha = 7
+orient = 1
+seps = c(1, 2, 3, 4, 5)
+n = 1500
+# 
+# for (sep in seps) {
+#   
+#   read_name = glue("./data_inputs/skew_norm/2d/skew_normal_2d-alpha={alpha}-sep={sep}-orient={orient}-set-{set}.jld")
+#   all_data = h5read(
+#     read_name,
+#     "data"
+#   )
+# 
+#   data = all_data[1:n, ]
+#   
+#   post_z_samples = h5read(
+#     glue("./comp_outputs/skew_norm/2d/z_draws-skew_normal_2d-alpha={alpha}-sep={sep}-n={n}-orient={orient}-set-{set}.jld"),
+#     "z"
+#   )
+#   post_z_samples = t(post_z_samples[, (mcmc_burn + 1):mcmc_its])
+#   
+#   psm = comp.psm(post_z_samples)
+#   min_vi = minVI(
+#     psm,
+#     post_z_samples,
+#     method = "draws",
+#     include.greedy = FALSE
+#   )
+#   best_vi = min_vi$cl
+# 
+#   # Create 
+#   df = as.data.frame(cbind(data, best_vi))
+#   colnames(df) = c("x", "y", "z")
+#   save_file = glue("./comp_outputs/skew_norm/2d/summary-two_skew_norm_2d-alpha={alpha}-sep={sep}-n={n}-orient=1-set-{set}.csv")
+#   write.csv(df, file = save_file)
+# }
+
+
+for (sep in seps) {
+  filename = glue("./comp_outputs/skew_norm/2d/summary-two_skew_norm_2d-alpha={alpha}-sep={sep}-n={n}-orient=1-set-{set}.csv")
+  df = read.csv(filename)
+  df$z = as.factor(as.numeric(as.factor(df$z)))
+  summary_clustering_plot = df %>% ggplot(aes(x = x, y = y)) +
+    geom_point(aes(color = z), size = 1) +
+    scale_color_discrete() +
+    ggtitle(glue("Summary Clustering (Best VILB posterior sample)")) +
+    theme(text = element_text(size = 16))
+  print(summary_clustering_plot)
+  ggsave(
+    glue("./plot/two_skew_normal_2d_summary-sep={sep}.pdf"),
+    summary_clustering_plot,
+    width=8,
+    height=5,
+    units="in",
+    dpi=600,
+    device="pdf"
+  )
+}
+```
